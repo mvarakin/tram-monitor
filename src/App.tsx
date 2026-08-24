@@ -1,45 +1,23 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 
-import { useGetTransportsQuery } from './api/temperatureApi';
-import { DashboardPage } from './pages/DashboardPage';
+import edcStatistic from './data/edc_statistic';
+import { HomePage } from './pages/HomePage';
+import { TramPage } from './pages/TramPage';
 
 function App() {
-  const {
-    data: transports,
-    isLoading,
-    isError,
-  } = useGetTransportsQuery(undefined, {
-    pollingInterval: 10 * 1000,
-  });
-
-  if (isLoading) {
-    return <div>Загрузка...</div>;
-  }
-
-  if (isError) {
-    return <div>Ошибка загрузки данных</div>;
-  }
-
-  if (!transports) {
-    return null;
-  }
-
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL}>
       <Routes>
-        <Route path='/' element={<Navigate to='/temperature' replace />} />
+        <Route path='/' element={<HomePage edc={edcStatistic} />} />
+
         <Route
-          path='/temperature'
-          element={<DashboardPage transports={transports} metric='temperature' />}
+          path='/tram/:id/temperature'
+          element={<TramPage edc={edcStatistic} metric='temperature' />}
         />
-        <Route path='/speed' element={<DashboardPage transports={transports} metric='speed' />} />
+
         <Route
-          path='/transport/:id/speed'
-          element={<DashboardPage transports={transports} metric='speed' />}
-        />
-        <Route
-          path='/transport/:id'
-          element={<DashboardPage transports={transports} metric='temperature' />}
+          path='/tram/:id/voltage'
+          element={<TramPage edc={edcStatistic} metric='voltage' />}
         />
       </Routes>
     </BrowserRouter>

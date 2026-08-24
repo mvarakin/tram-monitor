@@ -18,7 +18,7 @@ h1 {
 }
 
 /* =========================================================
-   Раскладка: таблица слева, график справа
+   Главная: две таблицы рядом
    ========================================================= */
 
 .split {
@@ -28,13 +28,7 @@ h1 {
   align-items: start;
 }
 
-/* =========================================================
-   Таблица транспорта
-   ========================================================= */
-
 .table-container {
-  max-height: calc(100vh - 160px);
-  overflow-y: auto;
   border: 1px solid #ddd;
 }
 
@@ -52,29 +46,10 @@ h1 {
   outline-offset: -2px;
 }
 
-.transport-row--selected td {
-  background: #e8f0fe;
-  font-weight: 600;
-}
-
-/*
- * inset-тень вместо border-left:
- * border-collapse сдвинул бы колонки.
- */
-.transport-row--selected td:first-child {
-  box-shadow: inset 3px 0 0 0 #1a73e8;
-}
-
 table {
   width: 100%;
   border-collapse: collapse;
   background: white;
-}
-
-thead {
-  position: sticky;
-  top: 0;
-  z-index: 10;
 }
 
 th {
@@ -91,69 +66,16 @@ td {
   text-align: left;
 }
 
-/* Сортируемые заголовки: паддинг переезжает в кнопку */
-
-.th-sortable {
-  padding: 0;
-}
-
-.sort-button {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-  padding: 10px 14px;
-  border: 0;
-  background: none;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.sort-button:hover {
-  background: #e2e2e2;
-}
-
-.sort-arrow {
-  width: 1em;
-  text-align: center;
-}
-
-.sort-arrow--placeholder {
-  visibility: hidden;
-}
-
-/* Ширина колонок */
-
-th:nth-child(1),
-td:nth-child(1) {
-  width: auto;
-}
-
-th:nth-child(2),
-td:nth-child(2) {
-  width: 160px;
-}
-
-th:nth-child(3),
-td:nth-child(3) {
-  width: 160px;
-}
-
-th:nth-child(4),
-td:nth-child(4) {
-  width: 190px;
-}
-
-.temperature-value {
+.metric-value--normal {
   color: green;
 }
 
-.temperature-value--danger {
+.metric-value--danger {
   color: red;
 }
 
 .chart-section {
+  margin-bottom: 24px;
   padding: 20px;
   background: white;
   border: 1px solid #ddd;
@@ -164,26 +86,8 @@ td:nth-child(4) {
 }
 
 /* =========================================================
-   Правая панель
+   Страница трамвая
    ========================================================= */
-
-/*
- * Высота как у таблицы слева: панель занимает экран
- * целиком и скроллит себя сама, страница не едет.
- */
-.chart-panel {
-  display: flex;
-  flex-direction: column;
-  max-height: calc(100vh - 160px);
-}
-
-/*
- * Скроллится только содержимое вкладки —
- * заголовок и вкладки остаются на месте.
- */
-.chart-panel__content {
-  overflow-y: auto;
-}
 
 .chart-panel__header {
   display: flex;
@@ -197,256 +101,14 @@ td:nth-child(4) {
   margin: 0;
 }
 
-.chart-panel__close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  border: 0;
-  border-radius: 4px;
-  background: none;
-  color: #666;
-  /* 1.5em — дефолтный кегль h2, совпадает с .chart-panel__title */
-  font-size: 1.5em;
-  line-height: 1;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.chart-panel__close:hover {
-  background: #e2e2e2;
-  color: #333;
-}
-
-.chart-panel--empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 400px;
-  padding: 20px;
-  background: white;
-  border: 1px solid #ddd;
-  color: #666;
-}
-
-.chart-tabs {
-  display: flex;
-  gap: 4px;
-  margin-bottom: 20px;
-  border-bottom: 1px solid #ddd;
-}
-
-.chart-tab {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 16px;
-  border-bottom: 2px solid transparent;
-  color: #666;
-  text-decoration: none;
-}
-
-.chart-tab:hover {
-  color: #333;
-}
-
-.chart-tab--active {
-  border-bottom-color: #1a73e8;
-  color: #1a73e8;
-  font-weight: 600;
-}
-
-/*
- * Тон идёт после --active: цвет тревоги перебивает
- * синий активной вкладки, а подчёркивающая полоса
- * остаётся синей — она про «где я», не про тревогу.
- */
-
-.chart-tab--warning {
-  color: #ff8c00;
-}
-
-.chart-tab--danger {
-  color: red;
-}
-
-.alert-icon {
-  flex-shrink: 0;
-}
-
-.transport-info {
-  display: flex;
-  gap: 30px;
-  margin-bottom: 20px;
-  padding: 20px;
-  background: white;
-  border: 1px solid #ddd;
-}
-
-.info-item {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.info-label {
-  font-size: 14px;
-  color: #666;
-}
-
-.info-value {
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.info-value--normal {
-  color: green;
-}
-
-.info-value--warning {
-  color: #ff8c00;
-}
-
-.info-value--danger {
-  color: red;
-}
-
-.status {
-  font-size: 24px;
-  font-weight: 700;
-}
-
-.status--normal {
-  color: green;
-}
-
-.status--warning {
-  color: #ff8c00;
-}
-
-.status--danger {
-  color: red;
-}
-.chart-footer {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-
-  /*
-   * Отрицательный отступ съедает пустоту
-   * нижнего margin графика под подписями оси X.
-   */
-  margin-top: -8px;
-}
-
-.chart-switcher {
-  display: flex;
-  flex-shrink: 0;
-  gap: 8px;
-}
-
-.chart-button {
-  padding: 5px 12px;
-  border: 1px solid #bbb;
-  background: white;
-  cursor: pointer;
-  font-size: 13px;
-}
-
-.chart-button:hover {
-  background: #f0f0f0;
-}
-
-.chart-button--active {
-  background: #333;
-  color: white;
-  border-color: #333;
-}
-
-.speed-value--normal {
-  color: green;
-}
-
-.speed-value--warning {
-  color: #ff8c00;
-}
-
-.speed-value--danger {
-  color: red;
-}
-
-.chart-description {
-  margin: 20px 0 12px;
-}
-
-.chart-description h2 {
-  margin: 0 0 6px;
-  font-size: 20px;
-}
-
-.chart-description p {
-  margin: 0;
-  color: #666;
-}
-
 .chart-legend {
   display: flex;
   flex-wrap: wrap;
   gap: 8px 24px;
-  margin: 0;
+  margin: 8px 0 0;
   font-size: 14px;
 }
 
-.chart-legend__item--normal {
-  color: green;
-}
-
-.chart-legend__item--warning {
-  color: #ff8c00;
-}
-
-.chart-legend__item--danger {
-  color: red;
-}
-
-.countdown-ring {
-  transform: rotate(-90deg);
-  vertical-align: middle;
-}
-
-.countdown-ring__track {
-  fill: none;
-  stroke: #eee;
-  stroke-width: 2;
-}
-
-.countdown-ring__progress {
-  fill: none;
-  stroke: #1976d2;
-  stroke-width: 2;
-  stroke-linecap: round;
-  animation-name: countdown-ring-drain;
-  animation-timing-function: linear;
-  animation-fill-mode: forwards;
-}
-
-@keyframes countdown-ring-drain {
-  from {
-    stroke-dashoffset: 0;
-  }
-
-  to {
-    stroke-dashoffset: var(--countdown-ring-length);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .countdown-ring__progress {
-    animation: none;
-  }
+.chart-legend__item {
+  font-weight: 600;
 }
