@@ -1,0 +1,34 @@
+stages:
+  - lint
+  - build
+
+default:
+  image: node:22-alpine
+  cache:
+    key:
+      files:
+        - yarn.lock
+    paths:
+      - node_modules
+
+lint:
+  stage: lint
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+  script:
+    - yarn install --frozen-lockfile
+    - yarn lint
+
+pages:
+  stage: build
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+  script:
+    - yarn install --frozen-lockfile
+    - yarn build
+    - rm -rf public
+    - mv dist public
+    - cp public/index.html public/404.html
+  artifacts:
+    paths:
+      - public
