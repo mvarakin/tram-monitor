@@ -1,7 +1,7 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 
 import { CarriagePage } from './pages/CarriagePage';
-import edcStatistic from './data/edc_statistic';
+import edcStatistic from './data/statistics.json';
 import { HomePage } from './pages/HomePage';
 
 function App() {
