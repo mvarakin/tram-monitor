@@ -1,8 +1,8 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 
+import { CarriagePage } from './pages/CarriagePage';
 import edcStatistic from './data/edc_statistic';
 import { HomePage } from './pages/HomePage';
-import { TramPage } from './pages/TramPage';
 
 function App() {
   return (
@@ -11,13 +11,13 @@ function App() {
         <Route path='/' element={<HomePage edc={edcStatistic} />} />
 
         <Route
-          path='/tram/:id/temperature'
-          element={<TramPage edc={edcStatistic} metric='temperature' />}
+          path='/carriage/:number/temperature'
+          element={<CarriagePage edc={edcStatistic} metric='temperature' />}
         />
 
         <Route
-          path='/tram/:id/voltage'
-          element={<TramPage edc={edcStatistic} metric='voltage' />}
+          path='/carriage/:number/voltage'
+          element={<CarriagePage edc={edcStatistic} metric='voltage' />}
         />
       </Routes>
     </BrowserRouter>

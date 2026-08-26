@@ -82,7 +82,7 @@ function makeBatteryNumber(index: number): string {
   return `BAT-${String(index + 1).padStart(2, '0')}`;
 }
 
-type WalkState = { temp: number; vol: number };
+type WalkState = { temp: number; vol: number; };
 
 function initWalkState(rng: Rng): WalkState {
   return {
@@ -153,11 +153,10 @@ function makeCriticalEvent(rng: Rng, minuteFrom: Date, type: CriticalType, minVa
 }
 
 /**
-  getMaxValue()/getTramRows() (см. tramSelectors.ts), от которых зависит danger-тон в таблице HomePage,
-  читают только avg_temp/avg_vol за последнюю минуту и не заглядывают в critical[]. Поэтому обычный
-  critical-выброс (см. placeOutlierEvent) не поднимает danger-тон в таблице сам по себе — только в графике.
-  Чтобы таблица гарантированно показала danger, для одного зарезервированного события в последних минутах
-  avg тоже поднимается выше порога, а не только точка в critical[].
+  getCarriageRows() (см. carriageSelectors.ts) считает макс за весь период и учитывает critical[],
+  так что danger-тон в таблице поднимает любой critical-выброс — в том числе placeOutlierEvent.
+  Эта функция дополнительно поднимает и сам avg выше порога: так в данных остаётся случай,
+  когда вагон греется устойчиво, а не одной точкой-выбросом.
 */
 function placeDangerAvgEvent(rng: Rng, carriages: Carriage[], minuteIndex: number): void {
   const carriage = pick(rng, carriages);

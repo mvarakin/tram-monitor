@@ -74,6 +74,11 @@ td {
   color: red;
 }
 
+.cell--num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
 .chart-section {
   margin-bottom: 24px;
   padding: 20px;
@@ -86,7 +91,7 @@ td {
 }
 
 /* =========================================================
-   Страница трамвая
+   Страница вагона
    ========================================================= */
 
 .chart-panel__header {
@@ -99,6 +104,35 @@ td {
 
 .chart-panel__title {
   margin: 0;
+}
+
+/* Опора для абсолютной подсказки над графиком */
+.chart-plot {
+  position: relative;
+}
+
+.chart-tooltip {
+  position: absolute;
+  /* Над курсором и по центру: ромб остаётся видимым */
+  transform: translate(-50%, calc(-100% - 12px));
+  padding: 6px 10px;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 20%);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.chart-tooltip__battery {
+  font-weight: 600;
+}
+
+.chart-tooltip__value {
+  color: red;
+  font-variant-numeric: tabular-nums;
 }
 
 .chart-legend {

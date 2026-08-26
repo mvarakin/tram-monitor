@@ -1,5 +1,5 @@
-export const CHART_WIDTH = 800;
-export const CHART_HEIGHT = 400;
+export const CHART_WIDTH = 1600;
+export const CHART_HEIGHT = 500;
 
 export const CHART_MARGIN = {
   top: 20,
