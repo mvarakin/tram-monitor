@@ -1,4 +1,5 @@
 import { TEMPERATURE_DANGER, VOLTAGE_DANGER } from '../constants';
+import { getLocalDayRange } from '../time';
 
 import type {
   Battery,
@@ -29,8 +30,8 @@ const VOLT_STEP_MAX = 3;
 const VOLT_CLAMP_MIN = 350;
 const VOLT_CLAMP_MAX = 440;
 
-const MIN_CRITICAL_EVENTS = 600;
-const MAX_CRITICAL_EVENTS = 900;
+const MIN_CRITICAL_EVENTS = 60;
+const MAX_CRITICAL_EVENTS = 90;
 const LAST_MINUTE_WINDOW = 3;
 
 function mulberry32(seed: number): () => number {
@@ -67,8 +68,8 @@ function round1(value: number): number {
 }
 
 function getDayStart(): Date {
-  const now = new Date();
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const [dayStart] = getLocalDayRange(Date.now());
+  return new Date(dayStart);
 }
 
 function makeCarriageNumber(rng: Rng): string {

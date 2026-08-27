@@ -15,7 +15,8 @@ import { CrosshairLines } from './CrosshairLines';
 import { buildEventListLayout } from './eventListLayout';
 import { formatMetricWithUnit } from './metricFormat';
 import { PlotArea } from './PlotArea';
-import { buildTimeTicks, getLocalDayRange } from './timeTicks';
+import { buildTimeTicks } from './timeTicks';
+import { getLocalDayRange } from '../time';
 import { TEMPERATURE_DANGER, VOLTAGE_DANGER, HOUR_MS, HALF_HOUR_MS, SINGLE_POINT_RADIUS } from '../constants';
 
 import type { BatteryCriticalEvents, BatterySegments, CriticalPoint, Point } from '../data/carriageSelectors';
