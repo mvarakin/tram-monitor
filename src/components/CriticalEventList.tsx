@@ -1,5 +1,19 @@
 import { formatMetricWithUnit } from './metricFormat';
-import { TONE_COLOR } from './thresholds';
+import { isSameEvent } from './eventListLayout';
+import {
+  TONE_COLOR,
+  ROW_HEIGHT,
+  DIVIDER_OFFSET,
+  ANCHOR_OFFSET,
+  ANCHOR_RADIUS,
+  MARK_STUB,
+  LEAD_STUB,
+  ANCHOR_STUB,
+  LINK_OPACITY,
+  BACKGROUND_OPACITY,
+  FONT_SIZE,
+  TEXT_BASELINE,
+} from '../constants';
 
 import type { EventListLayout } from './eventListLayout';
 
@@ -14,27 +28,10 @@ type CriticalEventListProps = {
   innerWidth: number;
   innerHeight: number;
   metric: Metric;
+  hovered: { battery: string; event: CriticalPoint } | null;
+  onHover: (event: CriticalPoint, battery: string) => void;
+  onLeave: () => void;
 };
-
-/** Отступ разделителя от площадки: диагонали соединителей укладываются левее него. */
-const DIVIDER_OFFSET = 30;
-
-/** Якорь строки — правее разделителя, чтобы линия пересекала границу, а не упиралась в неё. */
-const ANCHOR_OFFSET = 16;
-
-const ANCHOR_RADIUS = 2.5;
-
-/** Горизонтальные хвосты ломаной: у ромба и перед якорем. */
-const MARK_STUB = 6;
-const LEAD_STUB = 18;
-const ANCHOR_STUB = 14;
-
-const LINK_OPACITY = 0.45;
-
-const FONT_SIZE = 12;
-
-/** Базовая линия текста относительно y строки: центрирует строку по её высоте. */
-const TEXT_BASELINE = 4;
 
 function formatMoment(timestamp: number): string {
   return new Date(timestamp).toLocaleTimeString('ru-RU', {
@@ -49,7 +46,7 @@ function formatMoment(timestamp: number): string {
  * ломаная от ромба к строке. Рисуется вне PlotArea — её clipPath обрезал бы соединители
  * по правому краю площадки.
  */
-export function CriticalEventList({ layout, x, y, innerWidth, innerHeight, metric }: CriticalEventListProps) {
+export function CriticalEventList({ layout, x, y, innerWidth, innerHeight, metric, hovered, onHover, onLeave }: CriticalEventListProps) {
   const dividerX = innerWidth + DIVIDER_OFFSET;
 
   const anchorX = dividerX + ANCHOR_OFFSET;
@@ -59,7 +56,7 @@ export function CriticalEventList({ layout, x, y, innerWidth, innerHeight, metri
   const valueX = dividerX + layout.width;
 
   return (
-    <g pointerEvents='none' fontSize={FONT_SIZE}>
+    <g fontSize={FONT_SIZE}>
       <line
         x1={dividerX}
         x2={dividerX}
@@ -67,14 +64,45 @@ export function CriticalEventList({ layout, x, y, innerWidth, innerHeight, metri
         y2={innerHeight}
         stroke='#ddd'
         strokeWidth={1}
+        pointerEvents='none'
       />
 
-      {/* Соединители — первыми: текст и якоря ложатся поверх. */}
+      {/* Фоны строк — первыми, потом соединители, потом текст. */}
 
+      {layout.rows.map((row) => {
+        const isHovered = isSameEvent(hovered, row.battery, row.event);
+
+        if (!isHovered) {
+          return null;
+        }
+
+        return (
+          <rect
+            key={`bg-${row.battery}-${row.event.timestamp}-${row.event.value}`}
+            x={dividerX}
+            y={row.y - ROW_HEIGHT / 2}
+            width={layout.width}
+            height={ROW_HEIGHT}
+            fill={row.color}
+            opacity={BACKGROUND_OPACITY}
+            pointerEvents='none'
+          />
+        );
+      })}
+
+      {/* Соединители — после фонов, перед текстом. */}
+
+      {/* Линия ромб → строка скрыта (не удалена), возможно вернём позже.
       {layout.rows.map((row) => {
         const markX = x(row.event);
 
         const markY = y(row.event);
+
+        const isHovered = isSameEvent(hovered, row.battery, row.event);
+
+        if (!isHovered) {
+          return null;
+        }
 
         const points = [
           [markX + MARK_STUB, markY],
@@ -92,11 +120,13 @@ export function CriticalEventList({ layout, x, y, innerWidth, innerHeight, metri
             strokeWidth={1}
             strokeLinejoin='round'
             opacity={LINK_OPACITY}
+            pointerEvents='none'
           />
         );
       })}
+      */}
 
-      <text x={anchorX} y={TEXT_BASELINE} fill='#666' fontWeight={600} letterSpacing={0.5}>
+      <text x={anchorX} y={TEXT_BASELINE} fill='#666' fontWeight={600} letterSpacing={0.5} pointerEvents='none'>
         КРИТИЧЕСКИЕ СОБЫТИЯ {layout.total}
       </text>
 
@@ -106,16 +136,28 @@ export function CriticalEventList({ layout, x, y, innerWidth, innerHeight, metri
           x={anchorX}
           y={group.y + TEXT_BASELINE}
           fill={group.color}
-          fontWeight={600}>
+          fontWeight={600}
+          pointerEvents='none'>
           ● {group.battery} · {group.count}
         </text>
       ))}
 
       {layout.rows.map((row) => (
         <g key={`${row.battery}-${row.event.timestamp}-${row.event.value}`}>
-          <circle cx={anchorX} cy={row.y} r={ANCHOR_RADIUS} fill={row.color} />
+          <rect
+            x={dividerX}
+            y={row.y - ROW_HEIGHT / 2}
+            width={layout.width}
+            height={ROW_HEIGHT}
+            fill='transparent'
+            onMouseEnter={() => onHover(row.event, row.battery)}
+            onMouseLeave={onLeave}
+            cursor='pointer'
+          />
 
-          <text x={textX} y={row.y + TEXT_BASELINE} fill='#333'>
+          <circle cx={anchorX} cy={row.y} r={ANCHOR_RADIUS} fill={row.color} pointerEvents='none' />
+
+          <text x={textX} y={row.y + TEXT_BASELINE} fill='#333' pointerEvents='none'>
             {formatMoment(row.event.timestamp)}
           </text>
 
@@ -124,7 +166,8 @@ export function CriticalEventList({ layout, x, y, innerWidth, innerHeight, metri
             y={row.y + TEXT_BASELINE}
             textAnchor='end'
             fill={TONE_COLOR.danger}
-            style={{ fontVariantNumeric: 'tabular-nums' }}>
+            style={{ fontVariantNumeric: 'tabular-nums' }}
+            pointerEvents='none'>
             {formatMetricWithUnit(row.event.value, metric)}
           </text>
         </g>

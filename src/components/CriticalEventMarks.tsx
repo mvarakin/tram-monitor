@@ -1,4 +1,5 @@
-import { TONE_COLOR } from './thresholds';
+import { TONE_COLOR, MARK_RADIUS, HIT_RADIUS } from '../constants';
+import { isSameEvent } from './eventListLayout';
 
 import type { MouseEvent } from 'react';
 
@@ -11,16 +12,11 @@ type CriticalEventMarksProps = {
   y: (event: CriticalPoint) => number;
   onHover: (event: CriticalPoint, battery: string, pointer: MouseEvent) => void;
   onLeave: () => void;
+  hovered: { battery: string; event: CriticalPoint } | null;
 };
 
-/** Полудиагональ ромба: квадрат 2r × 2r, повёрнутый на 45°. */
-const MARK_RADIUS = 4;
-
-/** Прозрачная мишень под курсор: попасть в ромб 8×8 по диагонали слишком тяжело. */
-const HIT_RADIUS = 9;
-
 /** Критические события одной батареи: ромб на значении события и мишень под курсор. */
-export function CriticalEventMarks({ battery, events, x, y, onHover, onLeave }: CriticalEventMarksProps) {
+export function CriticalEventMarks({ battery, events, x, y, onHover, onLeave, hovered }: CriticalEventMarksProps) {
   return (
     <g>
       {events.map((event) => {
@@ -28,13 +24,17 @@ export function CriticalEventMarks({ battery, events, x, y, onHover, onLeave }: 
 
         const cy = y(event);
 
+        const isHovered = isSameEvent(hovered, battery, event);
+
+        const radius = isHovered ? MARK_RADIUS * 1.5 : MARK_RADIUS;
+
         return (
           <g key={`${event.timestamp}-${event.value}`}>
             <rect
-              x={-MARK_RADIUS}
-              y={-MARK_RADIUS}
-              width={MARK_RADIUS * 2}
-              height={MARK_RADIUS * 2}
+              x={-radius}
+              y={-radius}
+              width={radius * 2}
+              height={radius * 2}
               transform={`translate(${cx}, ${cy}) rotate(45)`}
               fill={TONE_COLOR.danger}
             />

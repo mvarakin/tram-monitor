@@ -2,6 +2,8 @@ import { Link, useParams } from 'react-router-dom';
 
 import { BatteryChart } from '../components/BatteryChart';
 import { buildBatterySegments, buildCriticalEvents } from '../data/carriageSelectors';
+import { METRIC_LABEL } from '../constants';
+import { formatPeriod } from './formatPeriod';
 
 import type { EdcStatistic } from '../types/edcStatistic';
 import type { Metric } from '../types/metric';
@@ -10,28 +12,6 @@ type CarriagePageProps = {
   edc: EdcStatistic;
   metric: Metric;
 };
-
-const METRIC_LABEL: Record<Metric, string> = {
-  temperature: 'Температура',
-  voltage: 'Напряжение',
-};
-
-const PERIOD_FORMAT: Intl.DateTimeFormatOptions = {
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-};
-
-/** Границы периода в локальной зоне — как и подписи оси времени на графике. */
-function formatPeriod(from: string, to: string): string {
-  const start = new Date(from).toLocaleString('ru-RU', PERIOD_FORMAT);
-
-  const end = new Date(to).toLocaleString('ru-RU', PERIOD_FORMAT);
-
-  return `${start} — ${end}`;
-}
 
 export function CarriagePage({ edc, metric }: CarriagePageProps) {
   const { number } = useParams();
@@ -42,7 +22,7 @@ export function CarriagePage({ edc, metric }: CarriagePageProps) {
     return (
       <main className='app'>
         <p>Вагон не найден.</p>
-        <Link to='/'>Назад</Link>
+        <Link to='/' style={{ textTransform: 'none', borderBottom: '1px solid #1a73e8' }}>Назад</Link>
       </main>
     );
   }
@@ -56,29 +36,24 @@ export function CarriagePage({ edc, metric }: CarriagePageProps) {
   return (
     <main className='app'>
       <div className='chart-panel__header'>
+        <Link to='/' className='chart-panel__back'>← Назад</Link>
+
         <div>
           <h1 className='chart-panel__title'>
-            Вагон {carriage.number} — {METRIC_LABEL[metric]}
+            Вагон {carriage.number} ({carriage.type}) — {METRIC_LABEL[metric]}
           </h1>
 
           <p className='chart-panel__period'>{formatPeriod(edc.from, edc.to)}</p>
         </div>
-
-        <Link to='/'>Назад</Link>
       </div>
 
       <section className='chart-section'>
-        <h2>
-          Вагон {carriage.number} ({carriage.type})
-        </h2>
-
         {hasData ? (
           <BatteryChart
             segmentsByBattery={segmentsByBattery}
             eventsByBattery={eventsByBattery}
             metric={metric}
             from={edc.from}
-            to={edc.to}
           />
         ) : (
           <p>Нет данных за период.</p>

@@ -1,19 +1,20 @@
 import { getBatteryColor } from './batteryColors';
+import { PANEL_WIDTH, TITLE_HEIGHT, GROUP_HEADER_HEIGHT, ROW_HEIGHT, GROUP_GAP } from '../constants';
 
 import type { BatteryCriticalEvents, CriticalPoint } from '../data/carriageSelectors';
 
-export const PANEL_WIDTH = 300;
-
-/** Зазор между площадкой графика и панелью: в нём живут диагонали соединителей. */
-export const PANEL_GAP = 60;
-
-const TITLE_HEIGHT = 28;
-
-const GROUP_HEADER_HEIGHT = 26;
-
-const ROW_HEIGHT = 22;
-
-const GROUP_GAP = 12;
+export function isSameEvent(
+  hovered: { battery: string; event: CriticalPoint } | null,
+  battery: string,
+  event: CriticalPoint,
+): boolean {
+  return (
+    hovered !== null &&
+    hovered.battery === battery &&
+    hovered.event.timestamp === event.timestamp &&
+    hovered.event.value === event.value
+  );
+}
 
 /** Строка списка: событие, его вертикальная позиция и цвет своей батареи. */
 export type EventRow = {

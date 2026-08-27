@@ -1,9 +1,5 @@
 import type { Metric } from '../types/metric';
-
-export const METRIC_UNIT: Record<Metric, string> = {
-  temperature: '°C',
-  voltage: 'В',
-};
+import { METRIC_UNIT } from '../constants';
 
 /*
  * Температура показывается целыми градусами: доли градуса в телеметрии — шум,

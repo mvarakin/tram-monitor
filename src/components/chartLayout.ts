@@ -1,14 +1,4 @@
-import { PANEL_GAP } from './eventListLayout';
-
-export const CHART_WIDTH = 1600;
-export const CHART_HEIGHT = 500;
-
-export const CHART_MARGIN = {
-  top: 20,
-  right: 90,
-  bottom: 60,
-  left: 60,
-};
+import { PANEL_GAP, CHART_WIDTH, CHART_HEIGHT, CHART_MARGIN } from '../constants';
 
 export type ChartLayout = {
   width: number;

@@ -95,11 +95,19 @@ td {
    ========================================================= */
 
 .chart-panel__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  position: relative;
+  text-align: center;
   margin: 0 0 20px;
+  padding-left: 100px;
+}
+
+.chart-panel__back {
+  position: absolute;
+  left: 0;
+  top: 10px;
+  text-decoration: none;
+  color: #1a73e8;
+  border-bottom: 1px solid #1a73e8;
 }
 
 .chart-panel__title {
@@ -109,7 +117,7 @@ td {
 .chart-panel__period {
   margin: 4px 0 0;
   color: #666;
-  font-size: 14px;
+  font-size: 18px;
 }
 
 /* Опора для абсолютной подсказки над графиком */

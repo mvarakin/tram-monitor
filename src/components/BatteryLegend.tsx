@@ -1,4 +1,4 @@
-import { CHART_MARGIN, CHART_WIDTH } from './chartLayout';
+import { CHART_MARGIN, CHART_WIDTH } from '../constants';
 
 type BatteryLegendProps = {
   items: { label: string; color: string }[];

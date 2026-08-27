@@ -15,8 +15,8 @@ import { CrosshairLines } from './CrosshairLines';
 import { buildEventListLayout } from './eventListLayout';
 import { formatMetricWithUnit } from './metricFormat';
 import { PlotArea } from './PlotArea';
-import { TEMPERATURE_DANGER, VOLTAGE_DANGER } from './thresholds';
-import { buildTimeTicks, HALF_HOUR_MS, HOUR_MS } from './timeTicks';
+import { buildTimeTicks, getLocalDayRange } from './timeTicks';
+import { TEMPERATURE_DANGER, VOLTAGE_DANGER, HOUR_MS, HALF_HOUR_MS, SINGLE_POINT_RADIUS } from '../constants';
 
 import type { BatteryCriticalEvents, BatterySegments, CriticalPoint, Point } from '../data/carriageSelectors';
 import type { Metric } from '../types/metric';
@@ -26,11 +26,7 @@ type BatteryChartProps = {
   eventsByBattery: BatteryCriticalEvents;
   metric: Metric;
   from: string;
-  to: string;
 };
-
-/** Радиус точки для сегмента из одной минуты: одиночный moveto в SVG-пути невидим. */
-const SINGLE_POINT_RADIUS = 1.5;
 
 function formatTick(timestamp: number): string {
   return new Date(timestamp).toLocaleTimeString('ru-RU', {
@@ -39,18 +35,18 @@ function formatTick(timestamp: number): string {
   });
 }
 
-/** Событие под курсором вместе с позицией подсказки в пикселях контейнера. */
-type TooltipState = {
-  left: number;
-  top: number;
+/** Событие, которое пользователь смотрит: наведение на ромб (с позицией) или на строку (без позиции). */
+type HoveredEvent = {
   battery: string;
   event: CriticalPoint;
+  /** Есть только при наведении на ромб — включает ChartTooltip и CrosshairLines. */
+  pointer?: { left: number; top: number };
 };
 
-export function BatteryChart({ segmentsByBattery, eventsByBattery, metric, from, to }: BatteryChartProps) {
+export function BatteryChart({ segmentsByBattery, eventsByBattery, metric, from }: BatteryChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const [tooltip, setTooltip] = useState<TooltipState | null>(null);
+  const [hovered, setHovered] = useState<HoveredEvent | null>(null);
 
   /*
    * svg тянется по ширине контейнера, поэтому его внутренние координаты не совпадают
@@ -63,15 +59,21 @@ export function BatteryChart({ segmentsByBattery, eventsByBattery, metric, from,
       return;
     }
 
-    setTooltip({
-      left: pointer.clientX - bounds.left,
-      top: pointer.clientY - bounds.top,
+    setHovered({
       battery,
       event,
+      pointer: {
+        left: pointer.clientX - bounds.left,
+        top: pointer.clientY - bounds.top,
+      },
     });
   };
 
-  const hideTooltip = () => setTooltip(null);
+  const showLink = (event: CriticalPoint, battery: string) => {
+    setHovered({ battery, event });
+  };
+
+  const clearHovered = () => setHovered(null);
 
   // Батарея может быть представлена только событиями: avg за период не пришёл ни разу.
   const batteries = [...new Set([...Object.keys(segmentsByBattery), ...Object.keys(eventsByBattery)])];
@@ -87,9 +89,7 @@ export function BatteryChart({ segmentsByBattery, eventsByBattery, metric, from,
 
   const danger = metric === 'temperature' ? TEMPERATURE_DANGER : VOLTAGE_DANGER;
 
-  const firstTimestamp = new Date(from).getTime();
-
-  const lastTimestamp = new Date(to).getTime();
+  const [firstTimestamp, lastTimestamp] = getLocalDayRange(new Date(from).getTime());
 
   const values = [
     ...batteries.flatMap((battery) => (segmentsByBattery[battery] ?? []).flat().map((point) => point.value)),
@@ -179,12 +179,12 @@ export function BatteryChart({ segmentsByBattery, eventsByBattery, metric, from,
                 );
               })}
 
-              {/* Направляющие события под курсором — под ромбами, чтобы ромб остался цельным. */}
+              {/* Направляющие события — показываются при любом hover (ромб или строка). */}
 
-              {tooltip && (
+              {hovered && (
                 <CrosshairLines
-                  x={xScale(tooltip.event.timestamp) ?? 0}
-                  y={yScale(tooltip.event.value)}
+                  x={xScale(hovered.event.timestamp) ?? 0}
+                  y={yScale(hovered.event.value)}
                   bottom={innerHeight}
                 />
               )}
@@ -199,7 +199,8 @@ export function BatteryChart({ segmentsByBattery, eventsByBattery, metric, from,
                   x={(event) => xScale(event.timestamp) ?? 0}
                   y={(event) => yScale(event.value)}
                   onHover={showTooltip}
-                  onLeave={hideTooltip}
+                  onLeave={clearHovered}
+                  hovered={hovered}
                 />
               ))}
             </PlotArea>
@@ -214,6 +215,9 @@ export function BatteryChart({ segmentsByBattery, eventsByBattery, metric, from,
                 innerWidth={innerWidth}
                 innerHeight={innerHeight}
                 metric={metric}
+                hovered={hovered}
+                onHover={showLink}
+                onLeave={clearHovered}
               />
             )}
 
@@ -245,14 +249,14 @@ export function BatteryChart({ segmentsByBattery, eventsByBattery, metric, from,
           </Group>
         </svg>
 
-        {tooltip && (
+        {hovered?.pointer && (
           <ChartTooltip
-            left={tooltip.left}
-            top={tooltip.top}
-            battery={tooltip.battery}
-            color={getBatteryColor(batteries.indexOf(tooltip.battery))}
-            timestamp={tooltip.event.timestamp}
-            value={tooltip.event.value}
+            left={hovered.pointer.left}
+            top={hovered.pointer.top}
+            battery={hovered.battery}
+            color={getBatteryColor(batteries.indexOf(hovered.battery))}
+            timestamp={hovered.event.timestamp}
+            value={hovered.event.value}
             metric={metric}
           />
         )}

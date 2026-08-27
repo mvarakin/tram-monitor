@@ -1,3 +1,5 @@
+import { TEMPERATURE_DANGER, VOLTAGE_DANGER } from '../constants';
+
 import type {
   Battery,
   Carriage,
@@ -15,9 +17,6 @@ const CARRIAGE_TYPES = ['LVONOK', 'VITYAZ', 'KTM'];
 const MIN_BATTERIES_PER_CARRIAGE = 2;
 const MAX_BATTERIES_PER_CARRIAGE = 4;
 
-const TEMPERATURE_DANGER = 45;
-const VOLTAGE_DANGER = 450;
-
 const TEMP_BASELINE_MIN = 25;
 const TEMP_BASELINE_MAX = 35;
 const TEMP_STEP_MAX = 0.4;
@@ -30,8 +29,8 @@ const VOLT_STEP_MAX = 3;
 const VOLT_CLAMP_MIN = 350;
 const VOLT_CLAMP_MAX = 440;
 
-const MIN_CRITICAL_EVENTS = 60;
-const MAX_CRITICAL_EVENTS = 90;
+const MIN_CRITICAL_EVENTS = 600;
+const MAX_CRITICAL_EVENTS = 900;
 const LAST_MINUTE_WINDOW = 3;
 
 function mulberry32(seed: number): () => number {
