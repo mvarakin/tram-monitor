@@ -30,8 +30,8 @@ const VOLT_STEP_MAX = 3;
 const VOLT_CLAMP_MIN = 350;
 const VOLT_CLAMP_MAX = 440;
 
-const MIN_CRITICAL_EVENTS = 5;
-const MAX_CRITICAL_EVENTS = 10;
+const MIN_CRITICAL_EVENTS = 60;
+const MAX_CRITICAL_EVENTS = 90;
 const LAST_MINUTE_WINDOW = 3;
 
 function mulberry32(seed: number): () => number {

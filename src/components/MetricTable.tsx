@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 
+import { formatMetricValue } from './metricFormat';
 import { getTone } from './thresholds';
 
 import type { CarriageRow } from '../data/carriageSelectors';
@@ -60,7 +61,7 @@ export function MetricTable({ title, metric, unit, rows }: MetricTableProps) {
                     <td>{row.type}</td>
 
                     <td className={`cell--num metric-value metric-value--${tone}`}>
-                      {row.max.toFixed(1)}
+                      {formatMetricValue(row.max, metric)}
                     </td>
 
                     <td className={row.criticalCount > 0 ? 'cell--num metric-value metric-value--danger' : 'cell--num'}>

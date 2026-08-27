@@ -8,9 +8,12 @@ import { useRef, useState, type MouseEvent } from 'react';
 import { getBatteryColor } from './batteryColors';
 import { BatteryLegend } from './BatteryLegend';
 import { ChartTooltip } from './ChartTooltip';
-import { CHART_HEIGHT, CHART_MARGIN, CHART_WIDTH, INNER_HEIGHT, INNER_WIDTH } from './chartLayout';
+import { buildChartLayout } from './chartLayout';
+import { CriticalEventList } from './CriticalEventList';
 import { CriticalEventMarks } from './CriticalEventMarks';
 import { CrosshairLines } from './CrosshairLines';
+import { buildEventListLayout } from './eventListLayout';
+import { formatMetricWithUnit } from './metricFormat';
 import { PlotArea } from './PlotArea';
 import { TEMPERATURE_DANGER, VOLTAGE_DANGER } from './thresholds';
 import { buildTimeTicks, HALF_HOUR_MS, HOUR_MS } from './timeTicks';
@@ -77,9 +80,12 @@ export function BatteryChart({ segmentsByBattery, eventsByBattery, metric, from,
     return null;
   }
 
-  const danger = metric === 'temperature' ? TEMPERATURE_DANGER : VOLTAGE_DANGER;
+  // Панель забирает место у правого поля и задаёт минимальную высоту чарта.
+  const panel = buildEventListLayout(batteries, eventsByBattery);
 
-  const unit = metric === 'temperature' ? '°C' : 'В';
+  const { width, height, margin, innerWidth, innerHeight } = buildChartLayout(panel);
+
+  const danger = metric === 'temperature' ? TEMPERATURE_DANGER : VOLTAGE_DANGER;
 
   const firstTimestamp = new Date(from).getTime();
 
@@ -99,12 +105,12 @@ export function BatteryChart({ segmentsByBattery, eventsByBattery, metric, from,
 
   const xScale = scaleTime<number>({
     domain: [firstTimestamp, lastTimestamp],
-    range: [0, INNER_WIDTH],
+    range: [0, innerWidth],
   });
 
   const yScale = scaleLinear<number>({
     domain: [domainMin - padding, domainMax + padding],
-    range: [INNER_HEIGHT, 0],
+    range: [innerHeight, 0],
   });
 
   const hourTicks = buildTimeTicks(firstTimestamp, lastTimestamp, HOUR_MS);
@@ -120,17 +126,17 @@ export function BatteryChart({ segmentsByBattery, eventsByBattery, metric, from,
     <>
       <div className='chart-plot' ref={containerRef}>
         <svg
-          viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
+          viewBox={`0 0 ${width} ${height}`}
           width='100%'
           preserveAspectRatio='xMidYMid meet'
           style={{ display: 'block' }}>
-          <Group left={CHART_MARGIN.left} top={CHART_MARGIN.top}>
-            <PlotArea>
+          <Group left={margin.left} top={margin.top}>
+            <PlotArea width={innerWidth} height={innerHeight}>
               {/* Линия порога */}
 
               <line
                 x1={0}
-                x2={INNER_WIDTH}
+                x2={innerWidth}
                 y1={yScale(danger)}
                 y2={yScale(danger)}
                 stroke='red'
@@ -179,6 +185,7 @@ export function BatteryChart({ segmentsByBattery, eventsByBattery, metric, from,
                 <CrosshairLines
                   x={xScale(tooltip.event.timestamp) ?? 0}
                   y={yScale(tooltip.event.value)}
+                  bottom={innerHeight}
                 />
               )}
 
@@ -197,12 +204,29 @@ export function BatteryChart({ segmentsByBattery, eventsByBattery, metric, from,
               ))}
             </PlotArea>
 
-            <AxisLeft scale={yScale} numTicks={8} tickFormat={(value) => `${value}${unit}`} />
+            {/* Панель событий — вне PlotArea: соединители пересекают правую границу площадки. */}
+
+            {panel && (
+              <CriticalEventList
+                layout={panel}
+                x={(event) => xScale(event.timestamp) ?? 0}
+                y={(event) => yScale(event.value)}
+                innerWidth={innerWidth}
+                innerHeight={innerHeight}
+                metric={metric}
+              />
+            )}
+
+            <AxisLeft
+              scale={yScale}
+              numTicks={8}
+              tickFormat={(value) => formatMetricWithUnit(Number(value), metric)}
+            />
 
             {/* Получасовые засечки — первыми: часовые ложатся поверх. */}
 
             <AxisBottom
-              top={INNER_HEIGHT}
+              top={innerHeight}
               scale={xScale}
               tickValues={halfHourTicks}
               tickFormat={() => ''}
@@ -212,7 +236,7 @@ export function BatteryChart({ segmentsByBattery, eventsByBattery, metric, from,
             />
 
             <AxisBottom
-              top={INNER_HEIGHT}
+              top={innerHeight}
               scale={xScale}
               tickValues={hourTicks}
               tickLength={8}
@@ -229,7 +253,7 @@ export function BatteryChart({ segmentsByBattery, eventsByBattery, metric, from,
             color={getBatteryColor(batteries.indexOf(tooltip.battery))}
             timestamp={tooltip.event.timestamp}
             value={tooltip.event.value}
-            unit={unit}
+            metric={metric}
           />
         )}
       </div>

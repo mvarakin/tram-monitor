@@ -106,6 +106,12 @@ td {
   margin: 0;
 }
 
+.chart-panel__period {
+  margin: 4px 0 0;
+  color: #666;
+  font-size: 14px;
+}
+
 /* Опора для абсолютной подсказки над графиком */
 .chart-plot {
   position: relative;

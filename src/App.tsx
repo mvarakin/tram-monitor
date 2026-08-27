@@ -1,8 +1,15 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 
 import { CarriagePage } from './pages/CarriagePage';
-import edcStatistic from './data/statistics.json';
+import { generateEdcStatistic } from './data/generateEdcStatistic';
 import { HomePage } from './pages/HomePage';
+
+/*
+ * ВРЕМЕННО: в statistics.json нет ни одного критического события, панель событий
+ * на нём не появляется. Генератор даёт 5–10 событий на 3 вагона.
+ * Вернуть: import edcStatistic from './data/statistics.json';
+ */
+const edcStatistic = generateEdcStatistic();
 
 function App() {
   return (

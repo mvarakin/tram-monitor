@@ -1,3 +1,7 @@
+import { formatMetricWithUnit } from './metricFormat';
+
+import type { Metric } from '../types/metric';
+
 type ChartTooltipProps = {
   left: number;
   top: number;
@@ -6,7 +10,7 @@ type ChartTooltipProps = {
   color: string;
   timestamp: number;
   value: number;
-  unit: string;
+  metric: Metric;
 };
 
 function formatMoment(timestamp: number): string {
@@ -21,7 +25,7 @@ function formatMoment(timestamp: number): string {
 }
 
 /** Подсказка критического события. Координаты — в пикселях контейнера графика. */
-export function ChartTooltip({ left, top, battery, color, timestamp, value, unit }: ChartTooltipProps) {
+export function ChartTooltip({ left, top, battery, color, timestamp, value, metric }: ChartTooltipProps) {
   return (
     <div className='chart-tooltip' style={{ left, top }}>
       <div className='chart-tooltip__battery' style={{ color }}>
@@ -30,10 +34,7 @@ export function ChartTooltip({ left, top, battery, color, timestamp, value, unit
 
       <div>{formatMoment(timestamp)}</div>
 
-      <div className='chart-tooltip__value'>
-        {value}
-        {unit}
-      </div>
+      <div className='chart-tooltip__value'>{formatMetricWithUnit(value, metric)}</div>
     </div>
   );
 }
