@@ -1,10 +1,10 @@
-import { CHART_MARGIN, CHART_WIDTH } from '../constants';
+import { CHART_MARGIN } from '../constants';
 
 type BatteryLegendProps = {
   items: { label: string; color: string }[];
 };
 
-const PLOT_OFFSET = `min(${CHART_MARGIN.left}px, ${(CHART_MARGIN.left / CHART_WIDTH) * 100}%)`;
+const PLOT_OFFSET = `${CHART_MARGIN.left}px`;
 
 export function BatteryLegend({ items }: BatteryLegendProps) {
   return (

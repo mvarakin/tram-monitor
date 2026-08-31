@@ -1,5 +1,5 @@
 import { TONE_COLOR, MARK_RADIUS, HIT_RADIUS } from '../constants';
-import { isSameEvent } from './eventListLayout';
+import { isSameEvent } from './hoveredEvent';
 
 import type { MouseEvent } from 'react';
 

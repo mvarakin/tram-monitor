@@ -1,4 +1,4 @@
-import { PANEL_GAP, CHART_WIDTH, CHART_HEIGHT, CHART_MARGIN } from '../constants';
+import { CHART_MARGIN } from '../constants';
 
 export type ChartLayout = {
   width: number;
@@ -8,25 +8,14 @@ export type ChartLayout = {
   innerHeight: number;
 };
 
-/*
- * Размеры чарта под панель критических событий. Ширина всего svg не меняется (иначе
- * при width='100%' сжались бы и шрифты осей) — панель забирает место у правого поля.
- * Высота растёт, если строк больше, чем помещается: площадка растёт вместе с панелью,
- * так что ромбы и строки всегда лежат в одном вертикальном диапазоне.
- */
-export function buildChartLayout(panel: { width: number; height: number } | null): ChartLayout {
-  const margin = {
-    ...CHART_MARGIN,
-    right: panel ? PANEL_GAP + panel.width : CHART_MARGIN.right,
-  };
-
-  const height = Math.max(CHART_HEIGHT, margin.top + (panel?.height ?? 0) + margin.bottom);
+export function buildChartLayout(width: number, height: number): ChartLayout {
+  const margin = CHART_MARGIN;
 
   return {
-    width: CHART_WIDTH,
+    width,
     height,
     margin,
-    innerWidth: CHART_WIDTH - margin.left - margin.right,
+    innerWidth: width - margin.left - margin.right,
     innerHeight: height - margin.top - margin.bottom,
   };
 }

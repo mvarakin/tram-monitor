@@ -13,6 +13,12 @@ body {
   margin: 24px auto;
 }
 
+.carriage-page {
+  height: calc(100dvh - 48px);
+  display: flex;
+  flex-direction: column;
+}
+
 h1 {
   margin-bottom: 20px;
 }
@@ -80,7 +86,11 @@ td {
 }
 
 .chart-section {
-  margin-bottom: 24px;
+  flex: 1;
+  min-height: 360px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   padding: 20px;
   background: white;
   border: 1px solid #ddd;
@@ -120,9 +130,80 @@ td {
   font-size: 18px;
 }
 
+.chart-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.chart-row {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  min-height: 0;
+  gap: 12px;
+}
+
 /* Опора для абсолютной подсказки над графиком */
 .chart-plot {
   position: relative;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.battery-events {
+  width: 220px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+.battery-events__block {
+  flex: 1;
+  min-height: 0;
+}
+
+.battery-events__scroll {
+  height: 100%;
+  overflow-y: auto;
+}
+
+.battery-events__header {
+  position: sticky;
+  top: 0;
+  background: white;
+  font-weight: 600;
+  font-size: 12px;
+  padding: 4px 0;
+  z-index: 1;
+}
+
+.battery-events__row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  padding: 4px 0;
+  cursor: pointer;
+}
+
+.battery-events__time {
+  color: #333;
+}
+
+.battery-events__value {
+  color: red;
+  font-variant-numeric: tabular-nums;
+  margin-left: 8px;
+}
+
+.battery-events__empty {
+  font-size: 12px;
+  color: #999;
+  padding: 4px 0;
 }
 
 .chart-tooltip {

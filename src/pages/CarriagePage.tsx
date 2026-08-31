@@ -34,7 +34,7 @@ export function CarriagePage({ edc, metric }: CarriagePageProps) {
   const hasData = Object.keys(segmentsByBattery).length > 0 || Object.keys(eventsByBattery).length > 0;
 
   return (
-    <main className='app'>
+    <main className='app carriage-page'>
       <div className='chart-panel__header'>
         <Link to='/' className='chart-panel__back'>← Назад</Link>
 
@@ -54,6 +54,7 @@ export function CarriagePage({ edc, metric }: CarriagePageProps) {
             eventsByBattery={eventsByBattery}
             metric={metric}
             from={edc.from}
+            to={edc.to}
           />
         ) : (
           <p>Нет данных за период.</p>
