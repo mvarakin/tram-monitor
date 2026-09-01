@@ -1,19 +1,19 @@
 import { useNavigate } from 'react-router-dom';
 
+import { formatAlertMoment } from './formatAlertMoment';
 import { formatMetricValue } from './metricFormat';
-import { getTone } from './thresholds';
 
-import type { CarriageRow } from '../data/carriageSelectors';
+import type { AlertRow } from '../data/alertSelectors';
 import type { Metric } from '../types/metric';
 
-type MetricTableProps = {
+type AlertsTableProps = {
   title: string;
   metric: Metric;
   unit: string;
-  rows: CarriageRow[];
+  rows: AlertRow[];
 };
 
-export function MetricTable({ title, metric, unit, rows }: MetricTableProps) {
+export function AlertsTable({ title, metric, unit, rows }: AlertsTableProps) {
   const navigate = useNavigate();
 
   return (
@@ -21,25 +21,24 @@ export function MetricTable({ title, metric, unit, rows }: MetricTableProps) {
       <h2>{title}</h2>
 
       {rows.length === 0 ? (
-        <p>Нет данных за период.</p>
+        <p>Алертов за сегодня нет.</p>
       ) : (
         <div className='table-container'>
           <table>
             <thead>
               <tr>
+                <th>Дата/время</th>
+                <th>{title}, {unit}</th>
                 <th>Номер</th>
                 <th>Тип</th>
-                <th>Макс, {unit}</th>
-                <th>Крит. события</th>
+                <th>Алертов</th>
               </tr>
             </thead>
 
             <tbody>
               {rows.map((row) => {
-                const tone = getTone(row.max, metric);
-
                 // Номера вида 30641\411 содержат обратный слэш — без кодирования ломают путь.
-                const to = `/statistics/carriage/${encodeURIComponent(row.number)}/${metric}`;
+                const to = `/carriage/${encodeURIComponent(row.number)}/${metric}`;
 
                 return (
                   <tr
@@ -56,17 +55,17 @@ export function MetricTable({ title, metric, unit, rows }: MetricTableProps) {
 
                       navigate(to);
                     }}>
+                    <td>{formatAlertMoment(row.lastTimestamp)}</td>
+
+                    <td className='cell--num metric-value metric-value--danger'>
+                      {formatMetricValue(row.lastValue, metric)}
+                    </td>
+
                     <td>{row.number}</td>
 
                     <td>{row.type}</td>
 
-                    <td className={`cell--num metric-value metric-value--${tone}`}>
-                      {formatMetricValue(row.max, metric)}
-                    </td>
-
-                    <td className={row.criticalCount > 0 ? 'cell--num metric-value metric-value--danger' : 'cell--num'}>
-                      {row.criticalCount}
-                    </td>
+                    <td className='cell--num'>{row.count}</td>
                   </tr>
                 );
               })}

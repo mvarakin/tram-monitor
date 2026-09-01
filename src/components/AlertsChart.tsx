@@ -1,7 +1,5 @@
 import { AxisBottom, AxisLeft } from '@visx/axis';
-import { curveLinear } from '@visx/curve';
 import { Group } from '@visx/group';
-import { LinePath } from '@visx/shape';
 import { useEffect, useRef, useState, type RefObject } from 'react';
 
 import { getBatteryColor } from './batteryColors';
@@ -16,20 +14,12 @@ import { PlotArea } from './PlotArea';
 import { buildTimeTicks } from './timeTicks';
 import { useEventSelection, type SelectedEvent } from './useEventSelection';
 import { getLocalDayRange } from '../time';
-import {
-  TEMPERATURE_DANGER,
-  VOLTAGE_DANGER,
-  HOUR_MS,
-  HALF_HOUR_MS,
-  SINGLE_POINT_RADIUS,
-  METRIC_TICK_MIN_STEP,
-} from '../constants';
+import { HOUR_MS, HALF_HOUR_MS, METRIC_TICK_MIN_STEP } from '../constants';
 
-import type { BatteryCriticalEvents, BatterySegments, CriticalPoint, Point } from '../data/carriageSelectors';
+import type { BatteryCriticalEvents, CriticalPoint } from '../data/carriageSelectors';
 import type { Metric } from '../types/metric';
 
-type BatteryChartProps = {
-  segmentsByBattery: BatterySegments;
+type AlertsChartProps = {
   eventsByBattery: BatteryCriticalEvents;
   metric: Metric;
   from: string;
@@ -53,13 +43,11 @@ type ChartCanvasProps = {
   width: number;
   height: number;
   batteries: string[];
-  segmentsByBattery: BatterySegments;
   eventsByBattery: BatteryCriticalEvents;
   metric: Metric;
   scales: ChartScales;
   firstTimestamp: number;
   lastTimestamp: number;
-  danger: number;
   hovered: HoveredEvent | null;
   selected: SelectedEvent | null;
   onHover: (event: CriticalPoint, battery: string) => void;
@@ -67,19 +55,17 @@ type ChartCanvasProps = {
   onClickMark: (event: CriticalPoint, battery: string) => void;
 };
 
-/** Сам график: рисуется только когда известны размеры контейнера. */
+/** Только ромбы критических событий на осях времени/значения — без линий телеметрии и без порога. */
 function ChartCanvas({
   svgRef,
   width,
   height,
   batteries,
-  segmentsByBattery,
   eventsByBattery,
   metric,
   scales,
   firstTimestamp,
   lastTimestamp,
-  danger,
   hovered,
   selected,
   onHover,
@@ -107,49 +93,6 @@ function ChartCanvas({
       style={{ display: 'block' }}>
       <Group left={margin.left} top={margin.top}>
         <PlotArea width={innerWidth} height={innerHeight}>
-          <line
-            x1={0}
-            x2={innerWidth}
-            y1={yScale(danger)}
-            y2={yScale(danger)}
-            stroke='red'
-            strokeDasharray='6 4'
-            strokeWidth={1}
-          />
-
-          {batteries.map((battery, index) => {
-            const color = getBatteryColor(index);
-
-            const segments = segmentsByBattery[battery] ?? [];
-
-            return (
-              <g key={battery}>
-                {segments.map((segment) =>
-                  segment.length === 1 ? (
-                    <circle
-                      key={segment[0].timestamp}
-                      cx={xScale(segment[0].timestamp) ?? 0}
-                      cy={yScale(segment[0].value)}
-                      r={SINGLE_POINT_RADIUS}
-                      fill={color}
-                    />
-                  ) : (
-                    <LinePath<Point>
-                      key={segment[0].timestamp}
-                      data={segment}
-                      x={(point) => xScale(point.timestamp) ?? 0}
-                      y={(point) => yScale(point.value)}
-                      curve={curveLinear}
-                      stroke={color}
-                      strokeWidth={1.5}
-                      fill='none'
-                    />
-                  ),
-                )}
-              </g>
-            );
-          })}
-
           {active && (
             <CrosshairLines
               x={xScale(active.event.timestamp) ?? 0}
@@ -203,7 +146,7 @@ function ChartCanvas({
   );
 }
 
-export function BatteryChart({ segmentsByBattery, eventsByBattery, metric, from, to }: BatteryChartProps) {
+export function AlertsChart({ eventsByBattery, metric, from, to }: AlertsChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -229,9 +172,7 @@ export function BatteryChart({ segmentsByBattery, eventsByBattery, metric, from,
     return () => observer.disconnect();
   }, []);
 
-  const batteries = [...new Set([...Object.keys(segmentsByBattery), ...Object.keys(eventsByBattery)])];
-
-  const danger = metric === 'temperature' ? TEMPERATURE_DANGER : VOLTAGE_DANGER;
+  const batteries = Object.keys(eventsByBattery);
 
   const fromTimestamp = new Date(from).getTime();
   const toTimestamp = new Date(to).getTime();
@@ -241,11 +182,7 @@ export function BatteryChart({ segmentsByBattery, eventsByBattery, metric, from,
     ? [fromTimestamp, toTimestamp]
     : getLocalDayRange(fromTimestamp);
 
-  const values = [
-    ...batteries.flatMap((battery) => (segmentsByBattery[battery] ?? []).flat().map((point) => point.value)),
-    ...batteries.flatMap((battery) => (eventsByBattery[battery] ?? []).map((event) => event.value)),
-    danger,
-  ];
+  const values = batteries.flatMap((battery) => (eventsByBattery[battery] ?? []).map((event) => event.value));
 
   const scales = measuredSize
     ? buildChartScales(
@@ -286,13 +223,11 @@ export function BatteryChart({ segmentsByBattery, eventsByBattery, metric, from,
               width={measuredSize.width}
               height={measuredSize.height}
               batteries={batteries}
-              segmentsByBattery={segmentsByBattery}
               eventsByBattery={eventsByBattery}
               metric={metric}
               scales={scales}
               firstTimestamp={firstTimestamp}
               lastTimestamp={lastTimestamp}
-              danger={danger}
               hovered={hovered}
               selected={selected}
               onHover={showHover}

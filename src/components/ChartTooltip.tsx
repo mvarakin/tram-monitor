@@ -1,8 +1,12 @@
 import { formatMetricWithUnit } from './metricFormat';
 
+import type { Ref } from 'react';
+import type { CriticalPoint } from '../data/carriageSelectors';
 import type { Metric } from '../types/metric';
+import { MinuteAlertRing } from './MinuteAlertRing';
 
 type ChartTooltipProps = {
+  ref?: Ref<HTMLDivElement>;
   left: number;
   top: number;
   battery: string;
@@ -11,6 +15,8 @@ type ChartTooltipProps = {
   timestamp: number;
   value: number;
   metric: Metric;
+  /** Все события этой батареи (текущей метрики) — источник для минутного кольца алертов. */
+  events: CriticalPoint[];
 };
 
 function formatMoment(timestamp: number): string {
@@ -20,14 +26,13 @@ function formatMoment(timestamp: number): string {
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-    second: '2-digit',
   });
 }
 
 /** Подсказка критического события. Координаты — в пикселях контейнера графика. */
-export function ChartTooltip({ left, top, battery, color, timestamp, value, metric }: ChartTooltipProps) {
+export function ChartTooltip({ ref, left, top, battery, color, timestamp, value, metric, events }: ChartTooltipProps) {
   return (
-    <div className='chart-tooltip' style={{ left, top }}>
+    <div className='chart-tooltip' ref={ref} style={{ left, top }}>
       <div className='chart-tooltip__battery' style={{ color }}>
         {battery}
       </div>
@@ -35,6 +40,8 @@ export function ChartTooltip({ left, top, battery, color, timestamp, value, metr
       <div>{formatMoment(timestamp)}</div>
 
       <div className='chart-tooltip__value'>{formatMetricWithUnit(value, metric)}</div>
+
+      <MinuteAlertRing events={events} timestamp={timestamp} color={color} />
     </div>
   );
 }

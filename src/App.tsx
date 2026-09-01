@@ -1,8 +1,12 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 
-import { CarriagePage } from './pages/CarriagePage';
+import { AppLayout } from './components/AppLayout';
+import { CarriageAlertsPage } from './pages/CarriageAlertsPage';
+import { CarriageStatisticsPage } from './pages/CarriageStatisticsPage';
+import { generateAlerts } from './data/generateAlerts';
 import { generateEdcStatistic } from './data/generateEdcStatistic';
 import { HomePage } from './pages/HomePage';
+import { StatisticsPage } from './pages/StatisticsPage';
 
 /*
  * ВРЕМЕННО: в statistics.json нет ни одного критического события, панель событий
@@ -11,21 +15,37 @@ import { HomePage } from './pages/HomePage';
  */
 const edcStatistic = generateEdcStatistic();
 
+const alerts = generateAlerts();
+
 function App() {
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL}>
       <Routes>
-        <Route path='/' element={<HomePage edc={edcStatistic} />} />
+        <Route element={<AppLayout />}>
+          <Route path='/' element={<HomePage alerts={alerts} />} />
 
-        <Route
-          path='/carriage/:number/temperature'
-          element={<CarriagePage edc={edcStatistic} metric='temperature' />}
-        />
+          <Route path='/statistics' element={<StatisticsPage edc={edcStatistic} />} />
 
-        <Route
-          path='/carriage/:number/voltage'
-          element={<CarriagePage edc={edcStatistic} metric='voltage' />}
-        />
+          <Route
+            path='/carriage/:number/temperature'
+            element={<CarriageAlertsPage alerts={alerts} metric='temperature' />}
+          />
+
+          <Route
+            path='/carriage/:number/voltage'
+            element={<CarriageAlertsPage alerts={alerts} metric='voltage' />}
+          />
+
+          <Route
+            path='/statistics/carriage/:number/temperature'
+            element={<CarriageStatisticsPage edc={edcStatistic} metric='temperature' />}
+          />
+
+          <Route
+            path='/statistics/carriage/:number/voltage'
+            element={<CarriageStatisticsPage edc={edcStatistic} metric='voltage' />}
+          />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

@@ -1,5 +1,6 @@
 import { TEMPERATURE_DANGER, VOLTAGE_DANGER } from '../constants';
 import { getLocalDayRange } from '../time';
+import { clamp, mulberry32, pick, randInt, randRange, round1 } from './rng';
 
 import type {
   Battery,
@@ -9,6 +10,7 @@ import type {
   EdcStatistic,
   MinuteData,
 } from '../types/edcStatistic';
+import type { Rng } from './rng';
 
 const DEFAULT_SEED = 20260824;
 const MINUTES_PER_DAY = 1440;
@@ -33,39 +35,6 @@ const VOLT_CLAMP_MAX = 440;
 const MIN_CRITICAL_EVENTS = 600;
 const MAX_CRITICAL_EVENTS = 900;
 const LAST_MINUTE_WINDOW = 3;
-
-function mulberry32(seed: number): () => number {
-  let a = seed;
-  return () => {
-    a |= 0;
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-type Rng = () => number;
-
-function randRange(rng: Rng, min: number, max: number): number {
-  return min + rng() * (max - min);
-}
-
-function randInt(rng: Rng, min: number, max: number): number {
-  return Math.floor(randRange(rng, min, max + 1));
-}
-
-function pick<T>(rng: Rng, arr: T[]): T {
-  return arr[randInt(rng, 0, arr.length - 1)];
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
-}
-
-function round1(value: number): number {
-  return Math.round(value * 10) / 10;
-}
 
 function getDayStart(): Date {
   const [dayStart] = getLocalDayRange(Date.now());

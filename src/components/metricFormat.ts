@@ -5,8 +5,13 @@ import { METRIC_UNIT } from '../constants';
  * Температура показывается целыми градусами: доли градуса в телеметрии — шум,
  * который только мешает сравнивать значения. Напряжение остаётся с десятыми.
  */
+export function roundMetricValue(value: number, metric: Metric): number {
+  return metric === 'temperature' ? Math.round(value) : Math.round(value * 10) / 10;
+}
+
 export function formatMetricValue(value: number, metric: Metric): string {
-  return metric === 'temperature' ? String(Math.round(value)) : value.toFixed(1);
+  const rounded = roundMetricValue(value, metric);
+  return metric === 'temperature' ? String(rounded) : rounded.toFixed(1);
 }
 
 /** Значение с единицей измерения — для подписей осей, панели и подсказок. */

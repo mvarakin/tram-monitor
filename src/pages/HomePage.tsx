@@ -1,28 +1,28 @@
 import { useMemo } from 'react';
 
-import { MetricTable } from '../components/MetricTable';
-import { getCarriageRows } from '../data/carriageSelectors';
-import { formatPeriod } from './formatPeriod';
+import { AlertsTable } from '../components/AlertsTable';
+import { PERIOD_FORMAT } from '../constants';
+import { getAlertRows } from '../data/alertSelectors';
 
-import type { EdcStatistic } from '../types/edcStatistic';
+import type { Alert } from '../types/alert';
 
 type HomePageProps = {
-  edc: EdcStatistic;
+  alerts: Alert[];
 };
 
-export function HomePage({ edc }: HomePageProps) {
-  const temperatureRows = useMemo(() => getCarriageRows(edc, 'temperature'), [edc]);
+export function HomePage({ alerts }: HomePageProps) {
+  const temperatureRows = useMemo(() => getAlertRows(alerts, 'temperature'), [alerts]);
 
-  const voltageRows = useMemo(() => getCarriageRows(edc, 'voltage'), [edc]);
+  const voltageRows = useMemo(() => getAlertRows(alerts, 'voltage'), [alerts]);
 
   return (
     <main className='app'>
-      <h1>Мониторинг за период: {formatPeriod(edc.from, edc.to)}</h1>
+      <h1>Алерты за {new Date().toLocaleDateString('ru-RU', PERIOD_FORMAT)}</h1>
 
       <div className='split'>
-        <MetricTable title='Температура' metric='temperature' unit='°C' rows={temperatureRows} />
+        <AlertsTable title='Температура' metric='temperature' unit='°C' rows={temperatureRows} />
 
-        <MetricTable title='Напряжение' metric='voltage' unit='В' rows={voltageRows} />
+        <AlertsTable title='Напряжение' metric='voltage' unit='В' rows={voltageRows} />
       </div>
     </main>
   );

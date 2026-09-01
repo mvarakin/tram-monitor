@@ -8,12 +8,12 @@ import { formatPeriod } from './formatPeriod';
 import type { EdcStatistic } from '../types/edcStatistic';
 import type { Metric } from '../types/metric';
 
-type CarriagePageProps = {
+type CarriageStatisticsPageProps = {
   edc: EdcStatistic;
   metric: Metric;
 };
 
-export function CarriagePage({ edc, metric }: CarriagePageProps) {
+export function CarriageStatisticsPage({ edc, metric }: CarriageStatisticsPageProps) {
   const { number } = useParams();
 
   const carriage = edc.carriages.find((item) => item.number === number);
@@ -22,7 +22,7 @@ export function CarriagePage({ edc, metric }: CarriagePageProps) {
     return (
       <main className='app'>
         <p>Вагон не найден.</p>
-        <Link to='/' style={{ textTransform: 'none', borderBottom: '1px solid #1a73e8' }}>Назад</Link>
+        <Link to='/statistics' style={{ textTransform: 'none', borderBottom: '1px solid #1a73e8' }}>Назад</Link>
       </main>
     );
   }
@@ -36,7 +36,7 @@ export function CarriagePage({ edc, metric }: CarriagePageProps) {
   return (
     <main className='app carriage-page'>
       <div className='chart-panel__header'>
-        <Link to='/' className='chart-panel__back'>← Назад</Link>
+        <Link to='/statistics' className='chart-panel__back'>← Назад</Link>
 
         <div>
           <h1 className='chart-panel__title'>

@@ -3,6 +3,7 @@ import { formatMetricWithUnit } from './metricFormat';
 
 import type { CriticalPoint } from '../data/carriageSelectors';
 import type { Metric } from '../types/metric';
+import type { SelectedEvent } from './useEventSelection';
 
 type BatteryEventPanelProps = {
   battery: string;
@@ -10,8 +11,10 @@ type BatteryEventPanelProps = {
   events: CriticalPoint[];
   metric: Metric;
   hovered: { battery: string; event: CriticalPoint } | null;
+  selected: SelectedEvent | null;
   onHover: (event: CriticalPoint, battery: string) => void;
   onLeave: () => void;
+  onSelect: (event: CriticalPoint, battery: string) => void;
 };
 
 function formatMoment(timestamp: number): string {
@@ -28,8 +31,10 @@ export function BatteryEventPanel({
   events,
   metric,
   hovered,
+  selected,
   onHover,
   onLeave,
+  onSelect,
 }: BatteryEventPanelProps) {
   const sortedEvents = [...events].sort((a, b) => a.timestamp - b.timestamp);
 
@@ -44,15 +49,19 @@ export function BatteryEventPanel({
           <div className='battery-events__empty'>нет событий</div>
         ) : (
           sortedEvents.map((event) => {
-            const isHovered = isSameEvent(hovered, battery, event);
+            const isActive = isSameEvent(hovered, battery, event) || isSameEvent(selected, battery, event);
 
             return (
               <div
                 key={`${event.timestamp}-${event.value}`}
                 className='battery-events__row'
-                style={isHovered ? { backgroundColor: `${color}1f` } : undefined}
+                style={isActive ? { backgroundColor: `${color}1f` } : undefined}
                 onMouseEnter={() => onHover(event, battery)}
-                onMouseLeave={onLeave}>
+                onMouseLeave={onLeave}
+                onClick={(pointer) => {
+                  pointer.stopPropagation();
+                  onSelect(event, battery);
+                }}>
                 <div className='battery-events__time'>{formatMoment(event.timestamp)}</div>
 
                 <div className='battery-events__value'>{formatMetricWithUnit(event.value, metric)}</div>
