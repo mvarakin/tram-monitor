@@ -59,11 +59,11 @@ export const CROSSHAIR_DASHARRAY = '3 3';
 
 export const CROSSHAIR_OPACITY = 0.9;
 
-export const TOOLTIP_RING_RADIUS = 30;
+export const TOOLTIP_RING_RADIUS = 70;
 
-export const TOOLTIP_RING_STROKE_WIDTH = 10;
+export const TOOLTIP_RING_STROKE_WIDTH = 40;
 
-export const TOOLTIP_RING_GAP_DEG = 2;
+export const TOOLTIP_RING_GAP_DEG = 1;
 
 export const TOOLTIP_ANCHOR_GAP = 14;
 

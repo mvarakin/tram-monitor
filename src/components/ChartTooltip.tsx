@@ -41,7 +41,7 @@ export function ChartTooltip({ ref, left, top, battery, color, timestamp, value,
 
       <div className='chart-tooltip__value'>{formatMetricWithUnit(value, metric)}</div>
 
-      <MinuteAlertRing events={events} timestamp={timestamp} color={color} />
+      <MinuteAlertRing events={events} timestamp={timestamp} color={color} metric={metric} />
     </div>
   );
 }

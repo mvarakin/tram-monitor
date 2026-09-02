@@ -269,6 +269,35 @@ td {
 .chart-tooltip__ring {
   display: block;
   margin: 6px auto 0;
+  overflow: visible;
+}
+
+.chart-tooltip__ring-tick--alert {
+  transform-box: view-box;
+  transform-origin: 0 0;
+  transition: transform 120ms ease-out;
+}
+
+.chart-tooltip__ring-tick-wrap:hover .chart-tooltip__ring-tick--alert {
+  transform: scale(1.1);
+}
+
+.chart-tooltip__ring-time {
+  font-size: 16px;
+  font-weight: 600;
+  fill: #333;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-tooltip__ring-zero-label {
+  font-size: 16px;
+  fill: #999;
+}
+
+.chart-tooltip__ring-value {
+  font-size: 12px;
+  fill: red;
+  font-variant-numeric: tabular-nums;
 }
 
 .chart-legend {
