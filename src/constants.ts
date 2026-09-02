@@ -51,9 +51,15 @@ export const BATTERY_COLORS = ['#2a78d6', '#1baf7a', '#9c34eb', '#eda100', '#e87
 
 export const SINGLE_POINT_RADIUS = 1.5;
 
-export const MARK_RADIUS = 6;
+/** Минимальная ширина/высота бара критического события — иначе подпиксельная минута или одиночное значение (min === max) визуально исчезают. */
+export const MARK_MIN_WIDTH = 4;
 
-export const HIT_RADIUS = 9;
+export const MARK_MIN_HEIGHT = 4;
+
+export const MARK_ACTIVE_WIDTH_SCALE = 1.5;
+
+/** Насколько хит-зона шире видимого бара по каждой стороне — точно попасть курсором в узкий бар сложно. */
+export const MARK_HIT_PADDING = 4;
 
 export const CROSSHAIR_DASHARRAY = '3 3';
 

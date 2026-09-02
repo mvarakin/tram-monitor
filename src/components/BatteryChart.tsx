@@ -11,6 +11,7 @@ import { buildChartScales, type ChartScales } from './chartScales';
 import { ChartTooltip } from './ChartTooltip';
 import { CriticalEventMarks } from './CriticalEventMarks';
 import { CrosshairLines } from './CrosshairLines';
+import { findMinuteGroup } from './minuteGroups';
 import { formatMetricWithUnit, roundMetricValue } from './metricFormat';
 import { PlotArea } from './PlotArea';
 import { buildTimeTicks } from './timeTicks';
@@ -62,6 +63,7 @@ type ChartCanvasProps = {
   danger: number;
   hovered: HoveredEvent | null;
   selected: SelectedEvent | null;
+  selectedGroup: CriticalPoint[];
   onHover: (event: CriticalPoint, battery: string) => void;
   onLeave: () => void;
   onClickMark: (event: CriticalPoint, battery: string) => void;
@@ -82,6 +84,7 @@ function ChartCanvas({
   danger,
   hovered,
   selected,
+  selectedGroup,
   onHover,
   onLeave,
   onClickMark,
@@ -98,6 +101,10 @@ function ChartCanvas({
 
   // Пока тултип открыт, а курсор ушёл с метки — направляющие остаются на выбранной точке.
   const active = hovered ?? selected;
+
+  const activeMinValue = active
+    ? Math.min(...findMinuteGroup(eventsByBattery[active.battery] ?? [], active.event).map((event) => event.value))
+    : 0;
 
   return (
     <svg
@@ -154,6 +161,7 @@ function ChartCanvas({
             <CrosshairLines
               x={xScale(active.event.timestamp) ?? 0}
               y={yScale(roundMetricValue(active.event.value, metric))}
+              yMin={yScale(roundMetricValue(activeMinValue, metric))}
               bottom={innerHeight}
             />
           )}
@@ -171,6 +179,7 @@ function ChartCanvas({
               onClick={onClickMark}
               hovered={hovered}
               selected={selected}
+              selectedGroup={selectedGroup}
             />
           ))}
         </PlotArea>
@@ -271,6 +280,8 @@ export function BatteryChart({ segmentsByBattery, eventsByBattery, metric, from,
 
   const clearHovered = () => setHovered(null);
 
+  const selectedGroup = selected ? findMinuteGroup(eventsByBattery[selected.battery] ?? [], selected.event) : [];
+
   if (batteries.length === 0) {
     return null;
   }
@@ -295,6 +306,7 @@ export function BatteryChart({ segmentsByBattery, eventsByBattery, metric, from,
               danger={danger}
               hovered={hovered}
               selected={selected}
+              selectedGroup={selectedGroup}
               onHover={showHover}
               onLeave={clearHovered}
               onClickMark={toggleSelected}
@@ -326,6 +338,7 @@ export function BatteryChart({ segmentsByBattery, eventsByBattery, metric, from,
               metric={metric}
               hovered={hovered}
               selected={selected}
+              selectedGroup={selectedGroup}
               onHover={showHover}
               onLeave={clearHovered}
               onSelect={toggleSelected}

@@ -1,5 +1,5 @@
-import { MARK_RADIUS, HIT_RADIUS } from '../constants';
-import { isSameEvent } from './hoveredEvent';
+import { MARK_ACTIVE_WIDTH_SCALE, MARK_HIT_PADDING, MARK_MIN_HEIGHT, MARK_MIN_WIDTH, MINUTE_MS } from '../constants';
+import { groupEventsByMinute, minuteBucket, pickGroupRepresentative } from './minuteGroups';
 
 import type { MouseEvent } from 'react';
 
@@ -17,9 +17,24 @@ type CriticalEventMarksProps = {
   onClick: (event: CriticalPoint, battery: string) => void;
   hovered: { battery: string; event: CriticalPoint } | null;
   selected: SelectedEvent | null;
+  /** Все события выбранной батареи из той же минуты, что и кликнутое (см. minuteGroups.ts) — подсвечиваются вместе. */
+  selectedGroup: CriticalPoint[];
 };
 
-/** Критические события одной батареи: треугольник с восклицательным знаком цвета батареи (без обводки) на значении события и мишень под курсор. */
+/** Ужимает [start, end] до минимальной длины min, растягивая симметрично от середины. */
+function clampSpan(start: number, end: number, min: number): [number, number] {
+  const length = end - start;
+
+  if (length >= min) {
+    return [start, end];
+  }
+
+  const center = (start + end) / 2;
+
+  return [center - min / 2, center + min / 2];
+}
+
+/** Критические события одной батареи: вертикальный бар от min до max value внутри календарной минуты. */
 export function CriticalEventMarks({
   battery,
   color,
@@ -31,69 +46,68 @@ export function CriticalEventMarks({
   onClick,
   hovered,
   selected,
+  selectedGroup,
 }: CriticalEventMarksProps) {
+  const groups = groupEventsByMinute(events);
+
   return (
     <g>
-      {events.map((event) => {
-        const cx = x(event);
+      {groups.map((group) => {
+        const bucket = minuteBucket(group[0].timestamp);
 
-        const cy = y(event);
+        const representative = pickGroupRepresentative(group);
 
-        const isActive = isSameEvent(hovered, battery, event) || isSameEvent(selected, battery, event);
+        const values = group.map((event) => event.value);
 
-        const radius = isActive ? MARK_RADIUS * 1.5 : MARK_RADIUS;
+        const minValue = Math.min(...values);
 
-        const size = radius * 2.4;
+        const maxValue = Math.max(...values);
 
-        const apexY = -size * 0.6;
+        const isActive =
+          (hovered?.battery === battery && minuteBucket(hovered.event.timestamp) === bucket) ||
+          (selected?.battery === battery && selectedGroup.some((event) => minuteBucket(event.timestamp) === bucket));
 
-        const baseY = size * 0.4;
+        const [xLeft, xRight] = clampSpan(
+          x({ timestamp: bucket, value: 0 }),
+          x({ timestamp: bucket + MINUTE_MS, value: 0 }),
+          MARK_MIN_WIDTH,
+        );
 
-        const halfWidth = size / 2;
+        const [yTop, yBottom] = clampSpan(
+          y({ timestamp: 0, value: maxValue }),
+          y({ timestamp: 0, value: minValue }),
+          MARK_MIN_HEIGHT,
+        );
 
-        const markTopY = -size * 0.15;
+        const width = isActive ? (xRight - xLeft) * MARK_ACTIVE_WIDTH_SCALE : xRight - xLeft;
 
-        const markBottomY = size * 0.05;
+        const centerX = (xLeft + xRight) / 2;
 
-        const dotY = size * 0.22;
+        const barX = centerX - width / 2;
 
-        const dotRadius = Math.max(1, size * 0.06);
-
-        const markStrokeWidth = Math.max(1, size * 0.12);
-
-        const transform = `translate(${cx}, ${cy})`;
+        const height = yBottom - yTop;
 
         return (
-          <g key={`${event.timestamp}-${event.value}`}>
-            <polygon
-              points={`0,${apexY} ${-halfWidth},${baseY} ${halfWidth},${baseY}`}
-              transform={transform}
+          <g key={bucket}>
+            <rect
+              x={barX}
+              y={yTop}
+              width={width}
+              height={height}
               fill={color}
             />
 
-            <line
-              x1={0}
-              y1={markTopY}
-              x2={0}
-              y2={markBottomY}
-              transform={transform}
-              stroke='white'
-              strokeWidth={markStrokeWidth}
-              strokeLinecap='round'
-            />
-
-            <circle cx={0} cy={dotY} r={dotRadius} transform={transform} fill='white' />
-
-            <circle
-              cx={cx}
-              cy={cy}
-              r={HIT_RADIUS}
+            <rect
+              x={barX - MARK_HIT_PADDING}
+              y={yTop - MARK_HIT_PADDING}
+              width={width + MARK_HIT_PADDING * 2}
+              height={height + MARK_HIT_PADDING * 2}
               fill='transparent'
-              onMouseMove={() => onHover(event, battery)}
+              onMouseMove={() => onHover(representative, battery)}
               onMouseLeave={onLeave}
               onClick={(pointer: MouseEvent) => {
                 pointer.stopPropagation();
-                onClick(event, battery);
+                onClick(representative, battery);
               }}
             />
           </g>

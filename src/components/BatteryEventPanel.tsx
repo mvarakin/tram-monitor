@@ -1,4 +1,4 @@
-import { isSameEvent } from './hoveredEvent';
+import { minuteBucket } from './minuteGroups';
 import { formatMetricWithUnit } from './metricFormat';
 
 import type { CriticalPoint } from '../data/carriageSelectors';
@@ -12,6 +12,8 @@ type BatteryEventPanelProps = {
   metric: Metric;
   hovered: { battery: string; event: CriticalPoint } | null;
   selected: SelectedEvent | null;
+  /** Все события выбранной батареи из той же минуты, что и кликнутое (см. minuteGroups.ts) — подсвечиваются вместе. */
+  selectedGroup: CriticalPoint[];
   onHover: (event: CriticalPoint, battery: string) => void;
   onLeave: () => void;
   onSelect: (event: CriticalPoint, battery: string) => void;
@@ -32,11 +34,14 @@ export function BatteryEventPanel({
   metric,
   hovered,
   selected,
+  selectedGroup,
   onHover,
   onLeave,
   onSelect,
 }: BatteryEventPanelProps) {
   const sortedEvents = [...events].sort((a, b) => a.timestamp - b.timestamp);
+
+  const hoveredBucket = hovered?.battery === battery ? minuteBucket(hovered.event.timestamp) : null;
 
   return (
     <div className='battery-events__block'>
@@ -49,7 +54,10 @@ export function BatteryEventPanel({
           <div className='battery-events__empty'>нет событий</div>
         ) : (
           sortedEvents.map((event) => {
-            const isActive = isSameEvent(hovered, battery, event) || isSameEvent(selected, battery, event);
+            const isActive =
+              (hoveredBucket !== null && minuteBucket(event.timestamp) === hoveredBucket) ||
+              (selected?.battery === battery &&
+                selectedGroup.some((groupEvent) => groupEvent.timestamp === event.timestamp && groupEvent.value === event.value));
 
             return (
               <div

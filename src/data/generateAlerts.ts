@@ -1,4 +1,4 @@
-import { TEMPERATURE_DANGER, VOLTAGE_DANGER } from '../constants';
+import { HOUR_MS, TEMPERATURE_DANGER, VOLTAGE_DANGER } from '../constants';
 import { getLocalDayRange } from '../time';
 import { clamp, mulberry32, pick, randInt, randRange, round1 } from './rng';
 
@@ -12,25 +12,32 @@ const CARRIAGE_TYPES = ['LVONOK', 'VITYAZ', 'KTM'];
 const MIN_BATTERIES_PER_CARRIAGE = 2;
 const MAX_BATTERIES_PER_CARRIAGE = 4;
 
-const BURST_COUNT_MIN = 2;
-const BURST_COUNT_MAX = 5;
+/* Плотность алертов задаётся ставкой в час и домножается на прошедшее с полуночи время —
+ * иначе фиксированное число событий на всё окно [полночь, сейчас] к вечеру размазывается
+ * на много часов и график выглядит пустым. */
+const BURSTS_PER_HOUR_MIN = 13.7;
+const BURSTS_PER_HOUR_MAX = 20;
 const BURST_DURATION_MIN_SEC = 5;
 const BURST_DURATION_MAX_SEC = 60;
 const BURST_STEP_MS = 1000;
 const BURST_STEP_JITTER_MS = 300;
 
-const SINGLE_ALERT_COUNT_MIN = 0;
-const SINGLE_ALERT_COUNT_MAX = 5;
+const SINGLE_ALERTS_PER_HOUR_MIN = 0.5;
+const SINGLE_ALERTS_PER_HOUR_MAX = 3;
 
 const TEMP_BASELINE_MIN = 25;
 const TEMP_BASELINE_MAX = 35;
 const VOLT_BASELINE_MIN = 380;
 const VOLT_BASELINE_MAX = 420;
 
+const TEMP_ALERT_MIN = 46;
+const TEMP_ALERT_MAX = 55;
+
 /*
  * Значение нарушающего параметра держится выше порога весь burst (батарея "провисла"
  * за пределами диапазона), с небольшим дрейфом — TEMP_DRIFT_STEP/VOLT_DRIFT_STEP ниже.
- * Верхняя граница — как у criticalValueFor() в generateEdcStatistic.ts.
+ * Верхняя граница voltage — как у criticalValueFor() в generateEdcStatistic.ts;
+ * у temperature диапазон задан отдельно (TEMP_ALERT_MIN/MAX) шире и без привязки к нему.
  */
 const DANGER_BY_TYPE: Record<AlertType, number> = {
   TEMPERATURE: TEMPERATURE_DANGER,
@@ -38,8 +45,15 @@ const DANGER_BY_TYPE: Record<AlertType, number> = {
 };
 
 const MAX_BY_TYPE: Record<AlertType, number> = {
-  TEMPERATURE: 60,
+  TEMPERATURE: TEMP_ALERT_MAX,
   VOLTAGE: 480,
+};
+
+/** Начальное значение нарушающего параметра берётся отсюда — не из узкой полосы над порогом,
+ * иначе алерты одного типа кучкуются у danger вместо разброса по всему диапазону. */
+const INIT_VALUE_RANGE: Record<AlertType, [number, number]> = {
+  TEMPERATURE: [TEMP_ALERT_MIN, TEMP_ALERT_MAX],
+  VOLTAGE: [VOLTAGE_DANGER + 0.1, VOLTAGE_DANGER + 5],
 };
 
 const DRIFT_STEP_MAX: Record<AlertType, number> = {
@@ -143,7 +157,7 @@ function generateBurst(rng: Rng, pool: CarriageFixture[], windowStart: number, w
   const startMs = Math.floor(randRange(rng, windowStart, maxStart));
   const endMs = startMs + durationMs;
 
-  let value = randRange(rng, danger + 0.1, danger + 5);
+  let value = randRange(rng, ...INIT_VALUE_RANGE[type]);
 
   const alerts: Alert[] = [];
 
@@ -163,9 +177,8 @@ function generateSingleAlert(rng: Rng, pool: CarriageFixture[], windowStart: num
   const batteryNumber = pick(rng, carriage.batteryNumbers);
   const type = pick(rng, ALERT_TYPES);
 
-  const danger = DANGER_BY_TYPE[type];
   const timestampMs = Math.floor(randRange(rng, windowStart, windowEnd));
-  const value = randRange(rng, danger + 0.1, danger + 5);
+  const value = randRange(rng, ...INIT_VALUE_RANGE[type]);
   const other = randomOtherValue(rng, type);
 
   return makeAlert(type, carriage, batteryNumber, timestampMs, value, other);
@@ -182,13 +195,15 @@ export function generateAlerts(seed = DEFAULT_SEED): Alert[] {
 
   const alerts: Alert[] = [];
 
-  const burstCount = randInt(rng, BURST_COUNT_MIN, BURST_COUNT_MAX);
+  const elapsedHours = (windowEnd - windowStart) / HOUR_MS;
+
+  const burstCount = randInt(rng, Math.round(BURSTS_PER_HOUR_MIN * elapsedHours), Math.round(BURSTS_PER_HOUR_MAX * elapsedHours));
 
   for (let i = 0; i < burstCount; i++) {
     alerts.push(...generateBurst(rng, pool, windowStart, windowEnd));
   }
 
-  const singleCount = randInt(rng, SINGLE_ALERT_COUNT_MIN, SINGLE_ALERT_COUNT_MAX);
+  const singleCount = randInt(rng, Math.round(SINGLE_ALERTS_PER_HOUR_MIN * elapsedHours), Math.round(SINGLE_ALERTS_PER_HOUR_MAX * elapsedHours));
 
   for (let i = 0; i < singleCount; i++) {
     alerts.push(generateSingleAlert(rng, pool, windowStart, windowEnd));
