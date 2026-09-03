@@ -1,4 +1,4 @@
-import { Link, useLocation, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams, useOutletContext } from 'react-router-dom';
 
 import { BatteryChart } from '../components/BatteryChart';
 import { buildBatterySegments, buildCriticalEvents } from '../data/carriageSelectors';
@@ -8,16 +8,21 @@ import { formatDate } from './formatDate';
 import type { EdcStatistic } from '../types/edcStatistic';
 import type { Metric } from '../types/metric';
 
+type OutletContextType = {
+  edcStatistic: EdcStatistic;
+  isLoadingReal: boolean;
+};
+
 type CarriageStatisticsPageProps = {
-  edc: EdcStatistic;
   metric: Metric;
 };
 
-export function CarriageStatisticsPage({ edc, metric }: CarriageStatisticsPageProps) {
+export function CarriageStatisticsPage({ metric }: CarriageStatisticsPageProps) {
+  const { edcStatistic } = useOutletContext<OutletContextType>();
   const { number } = useParams();
   const location = useLocation();
 
-  const carriage = edc.carriages.find((item) => item.number === number);
+  const carriage = edcStatistic.carriages.find((item) => item.number === number);
 
   if (!carriage) {
     return (
@@ -44,7 +49,7 @@ export function CarriageStatisticsPage({ edc, metric }: CarriageStatisticsPagePr
             Вагон {carriage.number} ({carriage.type}) — {METRIC_LABEL[metric]}
           </h1>
 
-          <p className='chart-panel__period'>{formatDate(edc.from)}</p>
+          <p className='chart-panel__period'>{formatDate(edcStatistic.from)}</p>
         </div>
       </div>
 
@@ -54,8 +59,8 @@ export function CarriageStatisticsPage({ edc, metric }: CarriageStatisticsPagePr
             segmentsByBattery={segmentsByBattery}
             eventsByBattery={eventsByBattery}
             metric={metric}
-            from={edc.from}
-            to={edc.to}
+            from={edcStatistic.from}
+            to={edcStatistic.to}
           />
         ) : (
           <p>Нет данных за период.</p>

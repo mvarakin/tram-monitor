@@ -1,27 +1,25 @@
 import { useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useOutletContext } from 'react-router-dom';
 
 import { MetricTable } from '../components/MetricTable';
 import { getCarriageRows } from '../data/carriageSelectors';
 import { formatDate } from './formatDate';
 import { toLocalDateInputValue } from '../time';
 
-import type { DataMode } from '../types/dataMode';
 import type { EdcStatistic } from '../types/edcStatistic';
 
-type StatisticsPageProps = {
-  edc: EdcStatistic;
-  dataMode: DataMode;
-  onDataModeChange: (mode: DataMode) => void;
+type OutletContextType = {
+  edcStatistic: EdcStatistic;
   isLoadingReal: boolean;
 };
 
-export function StatisticsPage({ edc, dataMode, onDataModeChange, isLoadingReal }: StatisticsPageProps) {
+export function StatisticsPage() {
+  const { edcStatistic, isLoadingReal } = useOutletContext<OutletContextType>();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const temperatureRows = useMemo(() => getCarriageRows(edc, 'temperature'), [edc]);
+  const temperatureRows = useMemo(() => getCarriageRows(edcStatistic, 'temperature'), [edcStatistic]);
 
-  const voltageRows = useMemo(() => getCarriageRows(edc, 'voltage'), [edc]);
+  const voltageRows = useMemo(() => getCarriageRows(edcStatistic, 'voltage'), [edcStatistic]);
 
   function handleDateChange(value: string) {
     const next = new URLSearchParams(searchParams);
@@ -37,31 +35,13 @@ export function StatisticsPage({ edc, dataMode, onDataModeChange, isLoadingReal 
 
   return (
     <main className='app'>
-      <div className='data-mode-switch'>
-        <button
-          type='button'
-          className={`data-mode-switch__button${dataMode === 'real' ? ' data-mode-switch__button--active' : ''}`}
-          disabled={isLoadingReal}
-          onClick={() => onDataModeChange('real')}>
-          Реальные данные
-        </button>
-
-        <button
-          type='button'
-          className={`data-mode-switch__button${dataMode === 'fake' ? ' data-mode-switch__button--active' : ''}`}
-          disabled={isLoadingReal}
-          onClick={() => onDataModeChange('fake')}>
-          Фейк
-        </button>
-      </div>
-
       <h1 className='statistics-page__title'>
-        Статистика за {formatDate(edc.from)}
+        Статистика за {formatDate(edcStatistic.from)}
 
         <input
           type='date'
           className='statistics-page__date-picker'
-          value={toLocalDateInputValue(new Date(edc.from).getTime())}
+          value={toLocalDateInputValue(new Date(edcStatistic.from).getTime())}
           max={toLocalDateInputValue(Date.now())}
           onChange={(event) => handleDateChange(event.target.value)}
           aria-label='Выбрать дату'
