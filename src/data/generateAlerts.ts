@@ -17,13 +17,10 @@ const MAX_BATTERIES_PER_CARRIAGE = 4;
  * на много часов и график выглядит пустым. */
 const BURSTS_PER_HOUR_MIN = 13.7;
 const BURSTS_PER_HOUR_MAX = 20;
-const BURST_DURATION_MIN_SEC = 5;
-const BURST_DURATION_MAX_SEC = 60;
+const BURST_EVENTS_MIN = 15;
+const BURST_EVENTS_MAX = 60;
 const BURST_STEP_MS = 1000;
 const BURST_STEP_JITTER_MS = 300;
-
-const SINGLE_ALERTS_PER_HOUR_MIN = 0.5;
-const SINGLE_ALERTS_PER_HOUR_MAX = 3;
 
 const TEMP_BASELINE_MIN = 25;
 const TEMP_BASELINE_MAX = 35;
@@ -132,13 +129,17 @@ function randomOtherValue(rng: Rng, type: AlertType): number {
 }
 
 /*
- * Один burst = одна (вагон, батарея, тип), непрерывная серия алертов ~раз в секунду
- * (с джиттером шага), пока значение держится выше порога. Если в окне [windowStart, windowEnd]
- * не хватает места под минимальную длительность — burst пропускается (актуально сразу после полуночи).
+ * Один burst = одна (вагон, батарея, тип): батарея "сглючила" и это сразу серия из
+ * BURST_EVENTS_MIN..MAX алертов подряд (не единичный выброс), с шагом ~раз в секунду
+ * (с джиттером шага). Число событий выбирается сразу — длительность серии её побочный
+ * эффект и может выйти за пределы минуты. Резерв места под burst считается по худшему
+ * случаю шага; если в окне [windowStart, windowEnd] не хватает места — burst пропускается
+ * (актуально сразу после полуночи).
  */
 function generateBurst(rng: Rng, pool: CarriageFixture[], windowStart: number, windowEnd: number): Alert[] {
-  const durationMs = randInt(rng, BURST_DURATION_MIN_SEC, BURST_DURATION_MAX_SEC) * 1000;
-  const maxStart = windowEnd - durationMs;
+  const eventCount = randInt(rng, BURST_EVENTS_MIN, BURST_EVENTS_MAX);
+  const reservedMs = eventCount * (BURST_STEP_MS + BURST_STEP_JITTER_MS);
+  const maxStart = windowEnd - reservedMs;
 
   if (maxStart < windowStart) {
     return [];
@@ -154,34 +155,22 @@ function generateBurst(rng: Rng, pool: CarriageFixture[], windowStart: number, w
   const otherJitter = OTHER_FIELD_JITTER[type];
   const otherBaseline = randomOtherValue(rng, type);
 
-  const startMs = Math.floor(randRange(rng, windowStart, maxStart));
-  const endMs = startMs + durationMs;
-
+  let t = Math.floor(randRange(rng, windowStart, maxStart));
   let value = randRange(rng, ...INIT_VALUE_RANGE[type]);
 
   const alerts: Alert[] = [];
 
-  for (let t = startMs; t <= endMs; t += Math.round(clamp(BURST_STEP_MS + randRange(rng, -BURST_STEP_JITTER_MS, BURST_STEP_JITTER_MS), 400, 1600))) {
+  for (let i = 0; i < eventCount; i++) {
     value = clamp(value + randRange(rng, -driftStep, driftStep), danger + 0.1, max);
 
     const other = otherBaseline + randRange(rng, -otherJitter, otherJitter);
 
     alerts.push(makeAlert(type, carriage, batteryNumber, t, value, other));
+
+    t += Math.round(clamp(BURST_STEP_MS + randRange(rng, -BURST_STEP_JITTER_MS, BURST_STEP_JITTER_MS), 400, 1600));
   }
 
   return alerts;
-}
-
-function generateSingleAlert(rng: Rng, pool: CarriageFixture[], windowStart: number, windowEnd: number): Alert {
-  const carriage = pick(rng, pool);
-  const batteryNumber = pick(rng, carriage.batteryNumbers);
-  const type = pick(rng, ALERT_TYPES);
-
-  const timestampMs = Math.floor(randRange(rng, windowStart, windowEnd));
-  const value = randRange(rng, ...INIT_VALUE_RANGE[type]);
-  const other = randomOtherValue(rng, type);
-
-  return makeAlert(type, carriage, batteryNumber, timestampMs, value, other);
 }
 
 /** Алерты за сегодня: [локальная полночь, сейчас]. Формат — см. src/data/edc_alert_desc.ts. */
@@ -201,12 +190,6 @@ export function generateAlerts(seed = DEFAULT_SEED): Alert[] {
 
   for (let i = 0; i < burstCount; i++) {
     alerts.push(...generateBurst(rng, pool, windowStart, windowEnd));
-  }
-
-  const singleCount = randInt(rng, Math.round(SINGLE_ALERTS_PER_HOUR_MIN * elapsedHours), Math.round(SINGLE_ALERTS_PER_HOUR_MAX * elapsedHours));
-
-  for (let i = 0; i < singleCount; i++) {
-    alerts.push(generateSingleAlert(rng, pool, windowStart, windowEnd));
   }
 
   return alerts;

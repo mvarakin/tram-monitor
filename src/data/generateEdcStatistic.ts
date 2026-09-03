@@ -1,5 +1,5 @@
-import { TEMPERATURE_DANGER, VOLTAGE_DANGER } from '../constants';
-import { getLocalDayRange } from '../time';
+import { DAY_MS, TEMPERATURE_DANGER, VOLTAGE_DANGER } from '../constants';
+import { getLocalDayRange, parseLocalDateInputValue } from '../time';
 import { clamp, mulberry32, pick, randInt, randRange, round1 } from './rng';
 
 import type {
@@ -32,12 +32,17 @@ const VOLT_STEP_MAX = 3;
 const VOLT_CLAMP_MIN = 350;
 const VOLT_CLAMP_MAX = 440;
 
-const MIN_CRITICAL_EVENTS = 600;
-const MAX_CRITICAL_EVENTS = 900;
+const INCIDENT_COUNT_MIN = 1;
+const INCIDENT_COUNT_MAX = 3;
+const BURST_EVENTS_MIN = 15;
+const BURST_EVENTS_MAX = 60;
+const BURST_STEP_MS = 1000;
+const BURST_STEP_JITTER_MS = 300;
 const LAST_MINUTE_WINDOW = 3;
 
-function getDayStart(): Date {
-  const [dayStart] = getLocalDayRange(Date.now());
+function getDayStart(date?: string): Date {
+  const instant = date ? parseLocalDateInputValue(date) : Date.now();
+  const [dayStart] = getLocalDayRange(instant);
   return new Date(dayStart);
 }
 
@@ -123,7 +128,7 @@ function makeCriticalEvent(rng: Rng, minuteFrom: Date, type: CriticalType, minVa
 
 /**
   getCarriageRows() (см. carriageSelectors.ts) считает макс за весь период и учитывает critical[],
-  так что danger-тон в таблице поднимает любой critical-выброс — в том числе placeOutlierEvent.
+  так что danger-тон в таблице поднимает любой critical-выброс — в том числе placeCriticalBurst.
   Эта функция дополнительно поднимает и сам avg выше порога: так в данных остаётся случай,
   когда вагон греется устойчиво, а не одной точкой-выбросом.
 */
@@ -144,32 +149,64 @@ function placeDangerAvgEvent(rng: Rng, carriages: Carriage[], minuteIndex: numbe
   battery.critical.push(makeCriticalEvent(rng, new Date(minute.from), type, elevatedAvg));
 }
 
-function placeOutlierEvent(rng: Rng, carriages: Carriage[], minuteIndex: number): void {
+/*
+ * Один инцидент = одна (вагон, батарея, тип): серия из BURST_EVENTS_MIN..MAX critical-событий
+ * подряд (не единичная точка), с шагом ~раз в секунду (с джиттером). Число событий выбирается
+ * сразу — длительность серии её побочный эффект и может перекинуться на соседнюю минуту, events
+ * просто попадают в MinuteData той минуты, куда пришёлся их timestamp. avg_temp/avg_vol серия не
+ * трогает — critical остаётся точкой-выбросом поверх плавного тренда.
+ */
+function placeCriticalBurst(rng: Rng, carriages: Carriage[], dayStart: Date): void {
   const carriage = pick(rng, carriages);
-  const minute = carriage.data[minuteIndex];
-  const battery = pick(rng, minute.batteries);
+  const batteryIndex = randInt(rng, 0, carriage.data[0].batteries.length - 1);
   const type = pick<CriticalType>(rng, ['TEMPERATURE', 'VOLTAGE']);
-  battery.critical.push(makeCriticalEvent(rng, new Date(minute.from), type, 0));
-}
 
-function injectCriticalEvents(rng: Rng, carriages: Carriage[]): void {
-  const eventCount = randInt(rng, MIN_CRITICAL_EVENTS, MAX_CRITICAL_EVENTS);
+  const eventCount = randInt(rng, BURST_EVENTS_MIN, BURST_EVENTS_MAX);
+  const reservedMs = eventCount * (BURST_STEP_MS + BURST_STEP_JITTER_MS);
 
-  const lastMinuteIndex = randInt(rng, MINUTES_PER_DAY - LAST_MINUTE_WINDOW, MINUTES_PER_DAY - 1);
-  placeDangerAvgEvent(rng, carriages, lastMinuteIndex);
+  const windowStart = dayStart.getTime();
+  const windowEnd = windowStart + MINUTES_PER_DAY * 60_000;
+  const maxStart = windowEnd - reservedMs;
 
-  for (let i = 1; i < eventCount; i++) {
-    placeOutlierEvent(rng, carriages, randInt(rng, 0, MINUTES_PER_DAY - 1));
+  if (maxStart < windowStart) {
+    return;
+  }
+
+  let t = Math.floor(randRange(rng, windowStart, maxStart));
+
+  for (let i = 0; i < eventCount; i++) {
+    const minuteIndex = Math.min(Math.floor((t - windowStart) / 60_000), MINUTES_PER_DAY - 1);
+    const battery = carriage.data[minuteIndex].batteries[batteryIndex];
+
+    battery.critical.push({
+      type,
+      timestamp: new Date(t).toISOString(),
+      value: criticalValueFor(rng, type),
+    });
+
+    t += Math.round(clamp(BURST_STEP_MS + randRange(rng, -BURST_STEP_JITTER_MS, BURST_STEP_JITTER_MS), 400, 1600));
   }
 }
 
-export function generateEdcStatistic(seed = DEFAULT_SEED): EdcStatistic {
+function injectCriticalEvents(rng: Rng, carriages: Carriage[], dayStart: Date): void {
+  const lastMinuteIndex = randInt(rng, MINUTES_PER_DAY - LAST_MINUTE_WINDOW, MINUTES_PER_DAY - 1);
+  placeDangerAvgEvent(rng, carriages, lastMinuteIndex);
+
+  const incidentCount = randInt(rng, INCIDENT_COUNT_MIN, INCIDENT_COUNT_MAX);
+
+  for (let i = 0; i < incidentCount; i++) {
+    placeCriticalBurst(rng, carriages, dayStart);
+  }
+}
+
+export function generateEdcStatistic(date?: string): EdcStatistic {
+  const dayStart = getDayStart(date);
+  const seed = date ? DEFAULT_SEED + Math.floor(dayStart.getTime() / DAY_MS) : DEFAULT_SEED;
   const rng = mulberry32(seed);
-  const dayStart = getDayStart();
   const dayEnd = new Date(dayStart.getTime() + MINUTES_PER_DAY * 60_000);
 
   const carriages = buildCarriages(rng, dayStart);
-  injectCriticalEvents(rng, carriages);
+  injectCriticalEvents(rng, carriages, dayStart);
 
   return {
     from: dayStart.toISOString(),

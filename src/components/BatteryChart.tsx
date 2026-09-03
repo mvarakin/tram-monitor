@@ -9,7 +9,7 @@ import { BatteryEventPanel } from './BatteryEventPanel';
 import { BatteryLegend } from './BatteryLegend';
 import { buildChartScales, type ChartScales } from './chartScales';
 import { ChartTooltip } from './ChartTooltip';
-import { CriticalEventMarks } from './CriticalEventMarks';
+import { clampSpan, CriticalEventMarks } from './CriticalEventMarks';
 import { CrosshairLines } from './CrosshairLines';
 import { findMinuteGroup } from './minuteGroups';
 import { formatMetricWithUnit, roundMetricValue } from './metricFormat';
@@ -22,6 +22,7 @@ import {
   VOLTAGE_DANGER,
   HOUR_MS,
   HALF_HOUR_MS,
+  MARK_MIN_HEIGHT,
   SINGLE_POINT_RADIUS,
   METRIC_TICK_MIN_STEP,
 } from '../constants';
@@ -269,11 +270,20 @@ export function BatteryChart({ segmentsByBattery, eventsByBattery, metric, from,
 
   const { selected, tooltipRef, tooltipPosition, toggleSelected } = useEventSelection({
     containerSize: measuredSize,
-    anchorOf: ({ event }) =>
-      scales && {
+    anchorOf: ({ battery, event }) => {
+      if (!scales) return null;
+
+      const group = findMinuteGroup(eventsByBattery[battery] ?? [], event);
+      const values = group.map((e) => roundMetricValue(e.value, metric));
+      const maxValue = Math.max(...values);
+      const minValue = Math.min(...values);
+      const [yTop, yBottom] = clampSpan(scales.yScale(maxValue), scales.yScale(minValue), MARK_MIN_HEIGHT);
+
+      return {
         left: scales.margin.left + (scales.xScale(event.timestamp) ?? 0),
-        top: scales.margin.top + scales.yScale(roundMetricValue(event.value, metric)),
-      },
+        top: scales.margin.top + (yTop + yBottom) / 2,
+      };
+    },
   });
 
   const showHover = (event: CriticalPoint, battery: string) => setHovered({ battery, event });
@@ -318,10 +328,13 @@ export function BatteryChart({ segmentsByBattery, eventsByBattery, metric, from,
               ref={tooltipRef}
               left={tooltipPosition.left}
               top={tooltipPosition.top}
+              side={tooltipPosition.side}
+              arrowTop={tooltipPosition.arrowTop}
               battery={selected.battery}
               color={getBatteryColor(batteries.indexOf(selected.battery))}
               timestamp={selected.event.timestamp}
-              value={selected.event.value}
+              min={Math.min(...selectedGroup.map((e) => e.value))}
+              max={Math.max(...selectedGroup.map((e) => e.value))}
               metric={metric}
               events={eventsByBattery[selected.battery] ?? []}
             />

@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { AlertsChart } from '../components/AlertsChart';
 import { getCarriageAlertData } from '../data/alertSelectors';
 import { METRIC_LABEL } from '../constants';
-import { formatPeriod } from './formatPeriod';
+import { formatDate } from './formatDate';
 import { getLocalDayRange } from '../time';
 
 import type { Alert } from '../types/alert';
@@ -44,7 +44,7 @@ export function CarriageAlertsPage({ alerts, metric }: CarriageAlertsPageProps) 
             Вагон {number} ({carriageType}) — {METRIC_LABEL[metric]}
           </h1>
 
-          <p className='chart-panel__period'>{formatPeriod(from, to)}</p>
+          <p className='chart-panel__period'>{formatDate(from)}</p>
         </div>
       </div>
 

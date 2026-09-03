@@ -22,7 +22,7 @@ type CriticalEventMarksProps = {
 };
 
 /** Ужимает [start, end] до минимальной длины min, растягивая симметрично от середины. */
-function clampSpan(start: number, end: number, min: number): [number, number] {
+export function clampSpan(start: number, end: number, min: number): [number, number] {
   const length = end - start;
 
   if (length >= min) {

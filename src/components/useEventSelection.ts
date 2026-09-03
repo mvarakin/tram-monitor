@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { isSameEvent } from './hoveredEvent';
-import { TOOLTIP_ANCHOR_GAP, TOOLTIP_EDGE_PADDING } from '../constants';
+import { TOOLTIP_ANCHOR_GAP, TOOLTIP_ARROW_MARGIN, TOOLTIP_EDGE_PADDING } from '../constants';
 
 import type { CriticalPoint } from '../data/carriageSelectors';
 
@@ -94,7 +94,13 @@ export function useEventSelection({ containerSize, anchorOf }: UseEventSelection
       Math.max(TOOLTIP_EDGE_PADDING, containerSize.height - height - TOOLTIP_EDGE_PADDING),
     );
 
-    return { left, top };
+    // Стрелка-уголок указывает точно на anchor.top — карточку могло сдвинуть кламп-ом выше.
+    const arrowTop = clamp(anchor.top - top, TOOLTIP_ARROW_MARGIN, Math.max(TOOLTIP_ARROW_MARGIN, height - TOOLTIP_ARROW_MARGIN));
+
+    // Тултип справа от бара -> стрелка сидит на левом крае карточки (и наоборот).
+    const side: 'left' | 'right' = fitsRight ? 'left' : 'right';
+
+    return { left, top, side, arrowTop };
   }, [anchor, containerSize, tooltipSize]);
 
   return { selected, tooltipRef, tooltipPosition, toggleSelected };

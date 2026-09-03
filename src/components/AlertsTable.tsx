@@ -27,11 +27,11 @@ export function AlertsTable({ title, metric, unit, rows }: AlertsTableProps) {
           <table>
             <thead>
               <tr>
-                <th>Дата/время</th>
-                <th>{title}, {unit}</th>
                 <th>Номер</th>
                 <th>Тип</th>
-                <th>Алертов</th>
+                <th>Количество<br />алертов</th>
+                <th>Дата<br />последнего алерта</th>
+                <th>{title}, {unit}<br />последнего алерта</th>
               </tr>
             </thead>
 
@@ -55,17 +55,17 @@ export function AlertsTable({ title, metric, unit, rows }: AlertsTableProps) {
 
                       navigate(to);
                     }}>
-                    <td>{formatAlertMoment(row.lastTimestamp)}</td>
-
-                    <td className='cell--num metric-value metric-value--danger'>
-                      {formatMetricValue(row.lastValue, metric)}
-                    </td>
-
                     <td>{row.number}</td>
 
                     <td>{row.type}</td>
 
                     <td className='cell--num'>{row.count}</td>
+
+                    <td>{formatAlertMoment(row.lastTimestamp)}</td>
+
+                    <td className='cell--num metric-value metric-value--danger'>
+                      {formatMetricValue(row.lastValue, metric)}
+                    </td>
                   </tr>
                 );
               })}

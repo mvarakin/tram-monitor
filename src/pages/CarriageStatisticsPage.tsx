@@ -1,9 +1,9 @@
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 
 import { BatteryChart } from '../components/BatteryChart';
 import { buildBatterySegments, buildCriticalEvents } from '../data/carriageSelectors';
 import { METRIC_LABEL } from '../constants';
-import { formatPeriod } from './formatPeriod';
+import { formatDate } from './formatDate';
 
 import type { EdcStatistic } from '../types/edcStatistic';
 import type { Metric } from '../types/metric';
@@ -15,6 +15,7 @@ type CarriageStatisticsPageProps = {
 
 export function CarriageStatisticsPage({ edc, metric }: CarriageStatisticsPageProps) {
   const { number } = useParams();
+  const location = useLocation();
 
   const carriage = edc.carriages.find((item) => item.number === number);
 
@@ -22,7 +23,7 @@ export function CarriageStatisticsPage({ edc, metric }: CarriageStatisticsPagePr
     return (
       <main className='app'>
         <p>Вагон не найден.</p>
-        <Link to='/statistics' style={{ textTransform: 'none', borderBottom: '1px solid #1a73e8' }}>Назад</Link>
+        <Link to={{ pathname: '/statistics', search: location.search }} style={{ textTransform: 'none', borderBottom: '1px solid #1a73e8' }}>Назад</Link>
       </main>
     );
   }
@@ -36,14 +37,14 @@ export function CarriageStatisticsPage({ edc, metric }: CarriageStatisticsPagePr
   return (
     <main className='app carriage-page'>
       <div className='chart-panel__header'>
-        <Link to='/statistics' className='chart-panel__back'>← Назад</Link>
+        <Link to={{ pathname: '/statistics', search: location.search }} className='chart-panel__back'>← Назад</Link>
 
         <div>
           <h1 className='chart-panel__title'>
             Вагон {carriage.number} ({carriage.type}) — {METRIC_LABEL[metric]}
           </h1>
 
-          <p className='chart-panel__period'>{formatPeriod(edc.from, edc.to)}</p>
+          <p className='chart-panel__period'>{formatDate(edc.from)}</p>
         </div>
       </div>
 

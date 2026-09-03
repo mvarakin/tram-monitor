@@ -20,7 +20,7 @@ export function AppHeader() {
           to='/statistics'
           className={`app-header__link${isStatistics ? ' app-header__link--active' : ''}`}
         >
-          Статистика за прошлый день
+          Статистика
         </Link>
       </nav>
     </header>

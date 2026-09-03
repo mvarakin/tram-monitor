@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { formatMetricValue } from './metricFormat';
 import { getTone } from './thresholds';
@@ -15,6 +15,8 @@ type MetricTableProps = {
 
 export function MetricTable({ title, metric, unit, rows }: MetricTableProps) {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const query = searchParams.toString();
 
   return (
     <section>
@@ -39,7 +41,7 @@ export function MetricTable({ title, metric, unit, rows }: MetricTableProps) {
                 const tone = getTone(row.max, metric);
 
                 // Номера вида 30641\411 содержат обратный слэш — без кодирования ломают путь.
-                const to = `/statistics/carriage/${encodeURIComponent(row.number)}/${metric}`;
+                const to = `/statistics/carriage/${encodeURIComponent(row.number)}/${metric}${query ? `?${query}` : ''}`;
 
                 return (
                   <tr

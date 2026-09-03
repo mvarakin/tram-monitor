@@ -65,6 +65,10 @@ export const CROSSHAIR_DASHARRAY = '3 3';
 
 export const CROSSHAIR_OPACITY = 0.9;
 
+export const NOW_LINE_COLOR = '#8ab4f8';
+
+export const NOW_LINE_WIDTH = 2;
+
 export const TOOLTIP_RING_RADIUS = 70;
 
 export const TOOLTIP_RING_STROKE_WIDTH = 40;
@@ -74,3 +78,6 @@ export const TOOLTIP_RING_GAP_DEG = 1;
 export const TOOLTIP_ANCHOR_GAP = 14;
 
 export const TOOLTIP_EDGE_PADDING = 8;
+
+/** Минимальный отступ стрелки-уголка тултипа от скруглённых углов карточки. */
+export const TOOLTIP_ARROW_MARGIN = 12;

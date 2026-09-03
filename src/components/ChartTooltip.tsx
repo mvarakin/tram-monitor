@@ -1,6 +1,6 @@
-import { formatMetricWithUnit } from './metricFormat';
+import { formatMetricRangeWithUnit } from './metricFormat';
 
-import type { Ref } from 'react';
+import type { CSSProperties, Ref } from 'react';
 import type { CriticalPoint } from '../data/carriageSelectors';
 import type { Metric } from '../types/metric';
 import { MinuteAlertRing } from './MinuteAlertRing';
@@ -9,11 +9,16 @@ type ChartTooltipProps = {
   ref?: Ref<HTMLDivElement>;
   left: number;
   top: number;
+  /** С какой стороны бара стоит карточка — стрелка рисуется на противоположном крае, к бару. */
+  side: 'left' | 'right';
+  /** Смещение стрелки от верха карточки до Y бара, px. */
+  arrowTop: number;
   battery: string;
   /** Цвет линии батареи — имя в подсказке совпадает с графиком и легендой. */
   color: string;
   timestamp: number;
-  value: number;
+  min: number;
+  max: number;
   metric: Metric;
   /** Все события этой батареи (текущей метрики) — источник для минутного кольца алертов. */
   events: CriticalPoint[];
@@ -30,16 +35,31 @@ function formatMoment(timestamp: number): string {
 }
 
 /** Подсказка критического события. Координаты — в пикселях контейнера графика. */
-export function ChartTooltip({ ref, left, top, battery, color, timestamp, value, metric, events }: ChartTooltipProps) {
+export function ChartTooltip({
+  ref,
+  left,
+  top,
+  side,
+  arrowTop,
+  battery,
+  color,
+  timestamp,
+  min,
+  max,
+  metric,
+  events,
+}: ChartTooltipProps) {
+  const style = { left, top, '--arrow-top': `${arrowTop}px` } as CSSProperties;
+
   return (
-    <div className='chart-tooltip' ref={ref} style={{ left, top }}>
+    <div className={`chart-tooltip chart-tooltip--arrow-${side}`} ref={ref} style={style}>
       <div className='chart-tooltip__battery' style={{ color }}>
         {battery}
       </div>
 
       <div>{formatMoment(timestamp)}</div>
 
-      <div className='chart-tooltip__value'>{formatMetricWithUnit(value, metric)}</div>
+      <div className='chart-tooltip__value'>{formatMetricRangeWithUnit(min, max, metric)}</div>
 
       <MinuteAlertRing events={events} timestamp={timestamp} color={color} metric={metric} />
     </div>

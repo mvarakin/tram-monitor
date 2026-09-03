@@ -18,3 +18,11 @@ export function formatMetricValue(value: number, metric: Metric): string {
 export function formatMetricWithUnit(value: number, metric: Metric): string {
   return `${formatMetricValue(value, metric)}${METRIC_UNIT[metric]}`;
 }
+
+/** Диапазон min–max с дробной частью для всех событий минуты (без округления в целые). */
+export function formatMetricRangeWithUnit(min: number, max: number, metric: Metric): string {
+  if (min === max) {
+    return `${min.toFixed(1)}${METRIC_UNIT[metric]}`;
+  }
+  return `${min.toFixed(1)}–${max.toFixed(1)}${METRIC_UNIT[metric]}`;
+}

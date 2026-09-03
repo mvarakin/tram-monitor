@@ -67,6 +67,81 @@ h1 {
 }
 
 /* =========================================================
+   Переключатель источника данных (страница статистики)
+   ========================================================= */
+
+.data-mode-switch {
+  display: inline-flex;
+  margin-bottom: 20px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.data-mode-switch__button {
+  padding: 8px 16px;
+  border: none;
+  background: white;
+  color: #333;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.data-mode-switch__button:not(:last-child) {
+  border-right: 1px solid #ddd;
+}
+
+.data-mode-switch__button--active {
+  background: #1a73e8;
+  color: white;
+}
+
+.data-mode-switch__button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* =========================================================
+   Иконка выбора даты (страница статистики)
+   ========================================================= */
+
+.statistics-page__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.statistics-page__date-picker {
+  -webkit-appearance: none;
+  appearance: none;
+  border: none;
+  background: none;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  cursor: pointer;
+}
+
+.statistics-page__date-picker::-webkit-datetime-edit,
+.statistics-page__date-picker::-webkit-inner-spin-button,
+.statistics-page__date-picker::-webkit-clear-button {
+  display: none;
+}
+
+.statistics-page__date-picker::-webkit-calendar-picker-indicator {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  margin: 0;
+  opacity: 0.7;
+  cursor: pointer;
+}
+
+.statistics-page__date-picker::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+/* =========================================================
    Главная: две таблицы рядом
    ========================================================= */
 
@@ -255,6 +330,44 @@ td {
   font-size: 12px;
   line-height: 1.5;
   white-space: nowrap;
+}
+
+/* Уголок-стрелка к бару: ::before — контур (крупнее, цвет border), ::after — заливка
+   (меньше, белая), рисуется поверх ::before и оставляет видимым 1px контура по краю. */
+.chart-tooltip--arrow-left::before,
+.chart-tooltip--arrow-left::after,
+.chart-tooltip--arrow-right::before,
+.chart-tooltip--arrow-right::after {
+  content: '';
+  position: absolute;
+  top: var(--arrow-top);
+  width: 0;
+  height: 0;
+  border-top: 9px solid transparent;
+  border-bottom: 9px solid transparent;
+  margin-top: -9px;
+}
+
+.chart-tooltip--arrow-right::before {
+  right: -9px;
+  border-left: 9px solid #ccc;
+}
+
+.chart-tooltip--arrow-right::after {
+  right: -8px;
+  border-left: 8px solid white;
+  margin-top: -8px;
+}
+
+.chart-tooltip--arrow-left::before {
+  left: -9px;
+  border-right: 9px solid #ccc;
+}
+
+.chart-tooltip--arrow-left::after {
+  left: -8px;
+  border-right: 8px solid white;
+  margin-top: -8px;
 }
 
 .chart-tooltip__battery {
