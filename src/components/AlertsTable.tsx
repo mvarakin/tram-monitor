@@ -21,7 +21,7 @@ export function AlertsTable({ title, metric, unit, rows }: AlertsTableProps) {
       <h2>{title}</h2>
 
       {rows.length === 0 ? (
-        <p>Алертов за сегодня нет.</p>
+        <p>Критических событий за сегодня нет.</p>
       ) : (
         <div className='table-container'>
           <table>
@@ -29,9 +29,9 @@ export function AlertsTable({ title, metric, unit, rows }: AlertsTableProps) {
               <tr>
                 <th>Номер</th>
                 <th>Тип</th>
-                <th>Количество<br />алертов</th>
-                <th>Дата<br />последнего алерта</th>
-                <th>{title}, {unit}<br />последнего алерта</th>
+                <th>Количество<br />критических событий</th>
+                <th>Дата последнего<br />критического события</th>
+                <th>{title}, {unit}<br />последнего<br />критического события</th>
               </tr>
             </thead>
 

@@ -1,3 +1,5 @@
+import { TONE_COLOR } from '../constants';
+
 const NICE_MULTIPLIERS = [1, 2, 5];
 
 /** Ближайший "круглый" шаг (1/2/5 × 10ⁿ × minStep), дающий не более targetTicks делений. */
@@ -41,4 +43,20 @@ export function buildValueTicks(min: number, max: number, targetTicks: number, m
   }
 
   return ticks;
+}
+
+const TICK_LABEL_COLOR = '#222';
+
+/** Подписи тиков оси значений: на пороге и выше — красные. Порог включительно: отметка лежит на самой
+ * threshold-линии, поэтому относится к аварийной зоне (в отличие от getTone со строгим сравнением). */
+export function valueTickLabelProps(danger: number) {
+  // visx не мержит свои дефолты, когда tickLabelProps передан функцией, — перечисляем leftTickLabelProps явно.
+  return (value: unknown) => ({
+    dx: '-0.25em',
+    dy: '0.25em',
+    fontFamily: 'Arial',
+    fontSize: 10,
+    textAnchor: 'end' as const,
+    fill: Number(value) >= danger ? TONE_COLOR.danger : TICK_LABEL_COLOR,
+  });
 }

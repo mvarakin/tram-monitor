@@ -17,7 +17,7 @@ export function HomePage({ alerts }: HomePageProps) {
 
   return (
     <main className='app'>
-      <h1>Алерты за {new Date().toLocaleDateString('ru-RU', PERIOD_FORMAT)}</h1>
+      <h1>Критические события за {new Date().toLocaleDateString('ru-RU', PERIOD_FORMAT)}</h1>
 
       <div className='split'>
         <AlertsTable title='Температура' metric='temperature' unit='°C' rows={temperatureRows} />

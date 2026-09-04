@@ -9,12 +9,15 @@ import { buildChartScales, type ChartScales } from './chartScales';
 import { ChartTooltip } from './ChartTooltip';
 import { clampSpan, CriticalEventMarks } from './CriticalEventMarks';
 import { CrosshairLines } from './CrosshairLines';
+import { DangerZone } from './DangerZone';
 import { findMinuteGroup } from './minuteGroups';
 import { formatMetricWithUnit, roundMetricValue } from './metricFormat';
 import { NowLine } from './NowLine';
 import { PlotArea } from './PlotArea';
+import { getDanger } from './thresholds';
 import { buildTimeTicks } from './timeTicks';
 import { useEventSelection, type SelectedEvent } from './useEventSelection';
+import { valueTickLabelProps } from './valueTicks';
 import { getLocalDayRange } from '../time';
 import { HOUR_MS, HALF_HOUR_MS, MARK_MIN_HEIGHT, METRIC_TICK_MIN_STEP } from '../constants';
 
@@ -59,7 +62,7 @@ type ChartCanvasProps = {
   onClickMark: (event: CriticalPoint, battery: string) => void;
 };
 
-/** Только ромбы критических событий на осях времени/значения — без линий телеметрии и без порога. */
+/** Только ромбы критических событий на осях времени/значения — без линий телеметрии. */
 function ChartCanvas({
   svgRef,
   width,
@@ -79,6 +82,8 @@ function ChartCanvas({
   onClickMark,
 }: ChartCanvasProps) {
   const { margin, innerWidth, innerHeight, xScale, yScale, yTicks } = scales;
+
+  const danger = getDanger(metric);
 
   const hourTicks = buildTimeTicks(firstTimestamp, lastTimestamp, HOUR_MS);
 
@@ -103,6 +108,8 @@ function ChartCanvas({
       style={{ display: 'block' }}>
       <Group left={margin.left} top={margin.top}>
         <PlotArea width={innerWidth} height={innerHeight}>
+          <DangerZone y={yScale(danger)} width={innerWidth} height={innerHeight} />
+
           {active && (
             <CrosshairLines
               x={xScale(active.event.timestamp) ?? 0}
@@ -136,6 +143,7 @@ function ChartCanvas({
           scale={yScale}
           tickValues={yTicks}
           tickFormat={(value) => formatMetricWithUnit(Number(value), metric)}
+          tickLabelProps={valueTickLabelProps(danger)}
         />
 
         <AxisBottom

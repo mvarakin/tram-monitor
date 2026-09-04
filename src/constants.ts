@@ -11,6 +11,9 @@ export const TONE_COLOR: Record<Tone, string> = {
   danger: 'red',
 };
 
+/** Заливка аварийной зоны графика: настолько бледная, чтобы не глушить линии батарей и бары событий. */
+export const DANGER_ZONE_FILL = 'rgba(255, 0, 0, 0.06)';
+
 export const METRIC_UNIT: Record<Metric, string> = {
   temperature: '°C',
   voltage: 'В',
@@ -74,6 +77,26 @@ export const TOOLTIP_RING_RADIUS = 70;
 export const TOOLTIP_RING_STROKE_WIDTH = 40;
 
 export const TOOLTIP_RING_GAP_DEG = 1;
+
+/** Шаг тиков оси значений гистограммы минуты. Мельче METRIC_TICK_MIN_STEP: диапазон одной минуты
+ * узкий (например 46–47 °C), с шагом в градус столбики неразличимы. Подписи здесь не округляются
+ * до целых (в отличие от больших графиков), поэтому половинки не дублируются. */
+export const MINUTE_BARS_TICK_MIN_STEP: Record<Metric, number> = {
+  temperature: 0.5,
+  voltage: 0.1,
+};
+
+export const MINUTE_BARS_TARGET_TICKS = 4;
+
+/** Марджины внутри бокса гистограммы: сверху — место под подпись наведённого бара. */
+export const MINUTE_BARS_MARGIN = {
+  top: 14,
+  right: 4,
+  bottom: 18,
+  left: 28,
+};
+
+export const MINUTE_BARS_X_TICK_STEP = 10;
 
 export const TOOLTIP_ANCHOR_GAP = 14;
 

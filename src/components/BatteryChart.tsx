@@ -11,15 +11,16 @@ import { buildChartScales, type ChartScales } from './chartScales';
 import { ChartTooltip } from './ChartTooltip';
 import { clampSpan, CriticalEventMarks } from './CriticalEventMarks';
 import { CrosshairLines } from './CrosshairLines';
+import { DangerZone } from './DangerZone';
 import { findMinuteGroup } from './minuteGroups';
 import { formatMetricWithUnit, roundMetricValue } from './metricFormat';
 import { PlotArea } from './PlotArea';
+import { getDanger } from './thresholds';
 import { buildTimeTicks } from './timeTicks';
 import { useEventSelection, type SelectedEvent } from './useEventSelection';
+import { valueTickLabelProps } from './valueTicks';
 import { getLocalDayRange } from '../time';
 import {
-  TEMPERATURE_DANGER,
-  VOLTAGE_DANGER,
   HOUR_MS,
   HALF_HOUR_MS,
   MARK_MIN_HEIGHT,
@@ -115,15 +116,7 @@ function ChartCanvas({
       style={{ display: 'block' }}>
       <Group left={margin.left} top={margin.top}>
         <PlotArea width={innerWidth} height={innerHeight}>
-          <line
-            x1={0}
-            x2={innerWidth}
-            y1={yScale(danger)}
-            y2={yScale(danger)}
-            stroke='red'
-            strokeDasharray='6 4'
-            strokeWidth={1}
-          />
+          <DangerZone y={yScale(danger)} width={innerWidth} height={innerHeight} />
 
           {batteries.map((battery, index) => {
             const color = getBatteryColor(index);
@@ -189,6 +182,7 @@ function ChartCanvas({
           scale={yScale}
           tickValues={yTicks}
           tickFormat={(value) => formatMetricWithUnit(Number(value), metric)}
+          tickLabelProps={valueTickLabelProps(danger)}
         />
 
         <AxisBottom
@@ -241,7 +235,7 @@ export function BatteryChart({ segmentsByBattery, eventsByBattery, metric, from,
 
   const batteries = [...new Set([...Object.keys(segmentsByBattery), ...Object.keys(eventsByBattery)])];
 
-  const danger = metric === 'temperature' ? TEMPERATURE_DANGER : VOLTAGE_DANGER;
+  const danger = getDanger(metric);
 
   const fromTimestamp = new Date(from).getTime();
   const toTimestamp = new Date(to).getTime();

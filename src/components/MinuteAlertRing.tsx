@@ -1,12 +1,11 @@
 import { useState } from 'react';
 
 import { MINUTE_MS, METRIC_UNIT, TONE_COLOR, TOOLTIP_RING_GAP_DEG, TOOLTIP_RING_RADIUS, TOOLTIP_RING_STROKE_WIDTH } from '../constants';
-import { buildMinuteAlertSeconds } from './minuteAlertSeconds';
+import { buildMinuteAlertSeconds, buildMinuteSecondValues, SECONDS_PER_MINUTE } from './minuteAlertSeconds';
 
 import type { CriticalPoint } from '../data/carriageSelectors';
 import type { Metric } from '../types/metric';
 
-const SECONDS_PER_MINUTE = 60;
 const DEG_PER_SECOND = 360 / SECONDS_PER_MINUTE;
 const ANGLE_OFFSET_DEG = -DEG_PER_SECOND / 2;
 
@@ -57,13 +56,8 @@ export function MinuteAlertRing({ events, timestamp, color, metric }: MinuteAler
 
   const alertSeconds = buildMinuteAlertSeconds(events, timestamp);
   const minuteStart = Math.floor(timestamp / MINUTE_MS) * MINUTE_MS;
-  const minuteStartSec = Math.floor(minuteStart / 1000);
 
-  const secondValues = new Map<number, number>();
-  for (const event of events) {
-    const second = Math.floor(event.timestamp / 1000) - minuteStartSec;
-    if (second >= 0 && second < SECONDS_PER_MINUTE) secondValues.set(second, event.value);
-  }
+  const secondValues = buildMinuteSecondValues(events, timestamp);
 
   const hoveredValue = hoveredSecond !== null ? secondValues.get(hoveredSecond) : undefined;
 

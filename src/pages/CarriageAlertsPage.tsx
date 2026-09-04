@@ -1,10 +1,10 @@
 import { Link, useParams } from 'react-router-dom';
 
 import { AlertsChart } from '../components/AlertsChart';
-import { getCarriageAlertData } from '../data/alertSelectors';
 import { METRIC_LABEL } from '../constants';
-import { formatDate } from './formatDate';
+import { getCarriageAlertData } from '../data/alertSelectors';
 import { getLocalDayRange } from '../time';
+import { formatDate } from './formatDate';
 
 import type { Alert } from '../types/alert';
 import type { Metric } from '../types/metric';
@@ -41,7 +41,7 @@ export function CarriageAlertsPage({ alerts, metric }: CarriageAlertsPageProps) 
 
         <div>
           <h1 className='chart-panel__title'>
-            Вагон {number} ({carriageType}) — {METRIC_LABEL[metric]}
+            Вагон {number} ({carriageType}) — {METRIC_LABEL[metric]}: критические события
           </h1>
 
           <p className='chart-panel__period'>{formatDate(from)}</p>
@@ -57,7 +57,7 @@ export function CarriageAlertsPage({ alerts, metric }: CarriageAlertsPageProps) 
             to={to}
           />
         ) : (
-          <p>Алертов за период нет.</p>
+          <p>Критических событий за период нет.</p>
         )}
       </section>
     </main>
