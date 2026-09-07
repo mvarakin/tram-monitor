@@ -7,14 +7,18 @@ import { formatDate } from './formatDate';
 import { toLocalDateInputValue } from '../time';
 
 import type { EdcStatistic } from '../types/edcStatistic';
+import type { DataMode } from '../types/dataMode';
 
 type OutletContextType = {
   edcStatistic: EdcStatistic;
   isLoadingReal: boolean;
+  statisticsDataMode: DataMode;
+  availableDates: string[];
 };
 
 export function StatisticsPage() {
-  const { edcStatistic, isLoadingReal } = useOutletContext<OutletContextType>();
+  const { edcStatistic, isLoadingReal, statisticsDataMode, availableDates } =
+    useOutletContext<OutletContextType>();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const temperatureRows = useMemo(() => getCarriageRows(edcStatistic, 'temperature'), [edcStatistic]);
@@ -36,16 +40,31 @@ export function StatisticsPage() {
   return (
     <main className='app'>
       <h1 className='statistics-page__title'>
-        Статистика за {formatDate(edcStatistic.from)}
+        Статистика за {statisticsDataMode === 'real' ? '' : formatDate(edcStatistic.from)}
 
-        <input
-          type='date'
-          className='statistics-page__date-picker'
-          value={toLocalDateInputValue(new Date(edcStatistic.from).getTime())}
-          max={toLocalDateInputValue(Date.now())}
-          onChange={(event) => handleDateChange(event.target.value)}
-          aria-label='Выбрать дату'
-        />
+        {statisticsDataMode === 'real' ? (
+          <select
+            className='statistics-page__date-select'
+            value={toLocalDateInputValue(new Date(edcStatistic.from).getTime())}
+            onChange={(event) => handleDateChange(event.target.value)}
+            aria-label='Выбрать дату'
+          >
+            {availableDates.map((availableDate) => (
+              <option key={availableDate} value={availableDate}>
+                {formatDate(availableDate)}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            type='date'
+            className='statistics-page__date-picker'
+            value={toLocalDateInputValue(new Date(edcStatistic.from).getTime())}
+            max={toLocalDateInputValue(Date.now())}
+            onChange={(event) => handleDateChange(event.target.value)}
+            aria-label='Выбрать дату'
+          />
+        )}
       </h1>
 
       {isLoadingReal ? (

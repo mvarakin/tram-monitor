@@ -121,6 +121,15 @@ h1 {
   gap: 8px;
 }
 
+.statistics-page__date-select {
+  font: inherit;
+  color: inherit;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+}
+
 .statistics-page__date-picker {
   -webkit-appearance: none;
   appearance: none;
