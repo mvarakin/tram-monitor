@@ -1,1 +1,1 @@
-export type Metric = 'temperature' | 'voltage';
+export type Metric = 'temperature' | 'voltage' | 'imbalance';

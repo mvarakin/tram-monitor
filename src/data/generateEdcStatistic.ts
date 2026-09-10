@@ -1,6 +1,6 @@
-import { DAY_MS, TEMPERATURE_DANGER, VOLTAGE_DANGER } from '../constants';
+import { DAY_MS, IMBALANCE_DANGER, TEMPERATURE_DANGER, VOLTAGE_DANGER } from '../constants';
 import { getLocalDayRange, parseLocalDateInputValue } from '../time';
-import { clamp, mulberry32, pick, randInt, randRange, round1 } from './rng';
+import { clamp, mulberry32, pick, randInt, randRange, round1, round3 } from './rng';
 
 import type {
   Battery,
@@ -32,6 +32,15 @@ const VOLT_STEP_MAX = 3;
 const VOLT_CLAMP_MIN = 350;
 const VOLT_CLAMP_MAX = 440;
 
+/* Фоновый разбаланс держится в пределах нормы, снятой с реальных выгрузок
+ * (0.001–0.05 В при пороге 0.1). Выбросы поверх этого фона расставляют
+ * placeDangerAvgEvent / placeCriticalBurst — наравне с температурой и напряжением. */
+const IMB_BASELINE_MIN = 0.005;
+const IMB_BASELINE_MAX = 0.03;
+const IMB_STEP_MAX = 0.002;
+const IMB_CLAMP_MIN = 0.001;
+const IMB_CLAMP_MAX = 0.05;
+
 const INCIDENT_COUNT_MIN = 1;
 const INCIDENT_COUNT_MAX = 3;
 const BURST_EVENTS_MIN = 15;
@@ -56,12 +65,13 @@ function makeBatteryNumber(index: number): string {
   return `BAT-${String(index + 1).padStart(2, '0')}`;
 }
 
-type WalkState = { temp: number; vol: number; };
+type WalkState = { temp: number; vol: number; imb: number; };
 
 function initWalkState(rng: Rng): WalkState {
   return {
     temp: randRange(rng, TEMP_BASELINE_MIN, TEMP_BASELINE_MAX),
     vol: randRange(rng, VOLT_BASELINE_MIN, VOLT_BASELINE_MAX),
+    imb: randRange(rng, IMB_BASELINE_MIN, IMB_BASELINE_MAX),
   };
 }
 
@@ -69,13 +79,29 @@ function stepWalkState(rng: Rng, state: WalkState): WalkState {
   return {
     temp: clamp(state.temp + randRange(rng, -TEMP_STEP_MAX, TEMP_STEP_MAX), TEMP_CLAMP_MIN, TEMP_CLAMP_MAX),
     vol: clamp(state.vol + randRange(rng, -VOLT_STEP_MAX, VOLT_STEP_MAX), VOLT_CLAMP_MIN, VOLT_CLAMP_MAX),
+    imb: clamp(state.imb + randRange(rng, -IMB_STEP_MAX, IMB_STEP_MAX), IMB_CLAMP_MIN, IMB_CLAMP_MAX),
   };
 }
 
+const CRITICAL_TYPES: CriticalType[] = ['TEMPERATURE', 'VOLTAGE', 'IMBALANCE'];
+
+const DANGER_BY_CRITICAL_TYPE: Record<CriticalType, number> = {
+  TEMPERATURE: TEMPERATURE_DANGER,
+  VOLTAGE: VOLTAGE_DANGER,
+  IMBALANCE: IMBALANCE_DANGER,
+};
+
+/* Верхние границы взяты с запасом от порога: у разбаланса шкала на три порядка мельче,
+ * поэтому и шаг превышения свой (реальный минимум критического события — 0.101 В). */
 function criticalValueFor(rng: Rng, type: CriticalType): number {
-  return type === 'TEMPERATURE'
-    ? randRange(rng, TEMPERATURE_DANGER + 0.1, 60)
-    : randRange(rng, VOLTAGE_DANGER + 0.1, 480);
+  switch (type) {
+    case 'TEMPERATURE':
+      return randRange(rng, TEMPERATURE_DANGER + 0.1, 60);
+    case 'VOLTAGE':
+      return randRange(rng, VOLTAGE_DANGER + 0.1, 480);
+    case 'IMBALANCE':
+      return round3(randRange(rng, IMBALANCE_DANGER + 0.001, 0.3));
+  }
 }
 
 function buildCarriages(rng: Rng, dayStart: Date): Carriage[] {
@@ -97,6 +123,7 @@ function buildCarriages(rng: Rng, dayStart: Date): Carriage[] {
         number: batteryNumbers[b],
         avg_temp: round1(state.temp),
         avg_vol: round1(state.vol),
+        avg_imb: round3(state.imb),
         critical: [],
       }));
 
@@ -136,14 +163,19 @@ function placeDangerAvgEvent(rng: Rng, carriages: Carriage[], minuteIndex: numbe
   const carriage = pick(rng, carriages);
   const minute = carriage.data[minuteIndex];
   const battery = pick(rng, minute.batteries);
-  const type = pick<CriticalType>(rng, ['TEMPERATURE', 'VOLTAGE']);
-  const danger = type === 'TEMPERATURE' ? TEMPERATURE_DANGER : VOLTAGE_DANGER;
-  const elevatedAvg = round1(randRange(rng, danger + 0.1, danger + 5));
+  const type = pick<CriticalType>(rng, CRITICAL_TYPES);
+  const danger = DANGER_BY_CRITICAL_TYPE[type];
+  const elevatedAvg =
+    type === 'IMBALANCE'
+      ? round3(randRange(rng, danger + 0.001, danger + 0.05))
+      : round1(randRange(rng, danger + 0.1, danger + 5));
 
   if (type === 'TEMPERATURE') {
     battery.avg_temp = elevatedAvg;
-  } else {
+  } else if (type === 'VOLTAGE') {
     battery.avg_vol = elevatedAvg;
+  } else {
+    battery.avg_imb = elevatedAvg;
   }
 
   battery.critical.push(makeCriticalEvent(rng, new Date(minute.from), type, elevatedAvg));
@@ -159,7 +191,7 @@ function placeDangerAvgEvent(rng: Rng, carriages: Carriage[], minuteIndex: numbe
 function placeCriticalBurst(rng: Rng, carriages: Carriage[], dayStart: Date): void {
   const carriage = pick(rng, carriages);
   const batteryIndex = randInt(rng, 0, carriage.data[0].batteries.length - 1);
-  const type = pick<CriticalType>(rng, ['TEMPERATURE', 'VOLTAGE']);
+  const type = pick<CriticalType>(rng, CRITICAL_TYPES);
 
   const eventCount = randInt(rng, BURST_EVENTS_MIN, BURST_EVENTS_MAX);
   const reservedMs = eventCount * (BURST_STEP_MS + BURST_STEP_JITTER_MS);

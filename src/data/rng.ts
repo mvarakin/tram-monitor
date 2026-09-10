@@ -30,3 +30,8 @@ export function clamp(value: number, min: number, max: number): number {
 export function round1(value: number): number {
   return Math.round(value * 10) / 10;
 }
+
+/** Разбаланс живёт в диапазоне 0.001–0.25 В — округление до десятых схлопнуло бы его в ноль. */
+export function round3(value: number): number {
+  return Math.round(value * 1000) / 1000;
+}

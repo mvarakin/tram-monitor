@@ -1,13 +1,20 @@
-import type { Carriage, CriticalType, EdcStatistic } from '../types/edcStatistic';
+import type { Battery, Carriage, CriticalType, EdcStatistic } from '../types/edcStatistic';
 import type { Metric } from '../types/metric';
 
 const CRITICAL_TYPE_BY_METRIC: Record<Metric, CriticalType> = {
   temperature: 'TEMPERATURE',
   voltage: 'VOLTAGE',
+  imbalance: 'IMBALANCE',
 };
 
-function getBatteryValue(battery: { avg_temp: number | null; avg_vol: number | null }, metric: Metric): number | null {
-  return metric === 'temperature' ? battery.avg_temp : battery.avg_vol;
+const AVG_FIELD_BY_METRIC: Record<Metric, 'avg_temp' | 'avg_vol' | 'avg_imb'> = {
+  temperature: 'avg_temp',
+  voltage: 'avg_vol',
+  imbalance: 'avg_imb',
+};
+
+function getBatteryValue(battery: Battery, metric: Metric): number | null {
+  return battery[AVG_FIELD_BY_METRIC[metric]];
 }
 
 export type CarriageRow = {

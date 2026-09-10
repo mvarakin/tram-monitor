@@ -5,6 +5,13 @@ import type { Metric } from '../types/metric';
 const ALERT_TYPE_BY_METRIC: Record<Metric, AlertType> = {
   temperature: 'TEMPERATURE',
   voltage: 'VOLTAGE',
+  imbalance: 'IMBALANCE',
+};
+
+const ALERT_FIELD_BY_METRIC: Record<Metric, 'temperature' | 'voltage' | 'imbalance'> = {
+  temperature: 'temperature',
+  voltage: 'voltage',
+  imbalance: 'imbalance',
 };
 
 export type AlertRow = {
@@ -23,7 +30,7 @@ type Group = {
 };
 
 function valueOf(alert: Alert, metric: Metric): number {
-  return metric === 'temperature' ? alert.temperature : alert.voltage;
+  return alert[ALERT_FIELD_BY_METRIC[metric]];
 }
 
 /** Строки таблицы алертов: по строке на вагон, у которого сегодня был хотя бы один алерт этого типа. */

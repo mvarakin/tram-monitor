@@ -23,7 +23,9 @@ export function StatisticsPage() {
 
   const temperatureRows = useMemo(() => getCarriageRows(edcStatistic, 'temperature'), [edcStatistic]);
 
-  const voltageRows = useMemo(() => getCarriageRows(edcStatistic, 'voltage'), [edcStatistic]);
+  // const voltageRows = useMemo(() => getCarriageRows(edcStatistic, 'voltage'), [edcStatistic]);
+
+  const imbalanceRows = useMemo(() => getCarriageRows(edcStatistic, 'imbalance'), [edcStatistic]);
 
   function handleDateChange(value: string) {
     const next = new URLSearchParams(searchParams);
@@ -73,7 +75,9 @@ export function StatisticsPage() {
         <div className='split'>
           <MetricTable title='Температура' metric='temperature' unit='°C' rows={temperatureRows} />
 
-          <MetricTable title='Напряжение' metric='voltage' unit='В' rows={voltageRows} />
+          {/* <MetricTable title='Напряжение' metric='voltage' unit='В' rows={voltageRows} /> */}
+
+          <MetricTable title='Разбаланс' metric='imbalance' unit='В' rows={imbalanceRows} />
         </div>
       )}
     </main>

@@ -1,6 +1,6 @@
-import { HOUR_MS, TEMPERATURE_DANGER, VOLTAGE_DANGER } from '../constants';
+import { HOUR_MS, IMBALANCE_DANGER, TEMPERATURE_DANGER, VOLTAGE_DANGER } from '../constants';
 import { getLocalDayRange } from '../time';
-import { clamp, mulberry32, pick, randInt, randRange, round1 } from './rng';
+import { clamp, mulberry32, pick, randInt, randRange, round1, round3 } from './rng';
 
 import type { Alert, AlertType } from '../types/alert';
 import type { Rng } from './rng';
@@ -26,24 +26,37 @@ const TEMP_BASELINE_MIN = 25;
 const TEMP_BASELINE_MAX = 35;
 const VOLT_BASELINE_MIN = 380;
 const VOLT_BASELINE_MAX = 420;
+const IMB_BASELINE_MIN = 0.005;
+const IMB_BASELINE_MAX = 0.03;
 
 const TEMP_ALERT_MIN = 46;
 const TEMP_ALERT_MAX = 55;
 
 /*
  * Значение нарушающего параметра держится выше порога весь burst (батарея "провисла"
- * за пределами диапазона), с небольшим дрейфом — TEMP_DRIFT_STEP/VOLT_DRIFT_STEP ниже.
+ * за пределами диапазона), с небольшим дрейфом — DRIFT_STEP_MAX ниже.
  * Верхняя граница voltage — как у criticalValueFor() в generateEdcStatistic.ts;
  * у temperature диапазон задан отдельно (TEMP_ALERT_MIN/MAX) шире и без привязки к нему.
+ * Границы imbalance сняты с реальных выгрузок: нарушения там лежат в 0.101–0.255 В.
  */
 const DANGER_BY_TYPE: Record<AlertType, number> = {
   TEMPERATURE: TEMPERATURE_DANGER,
   VOLTAGE: VOLTAGE_DANGER,
+  IMBALANCE: IMBALANCE_DANGER,
 };
 
 const MAX_BY_TYPE: Record<AlertType, number> = {
   TEMPERATURE: TEMP_ALERT_MAX,
   VOLTAGE: 480,
+  IMBALANCE: 0.255,
+};
+
+/** Насколько минимально значение нарушения отстоит от порога — у каждой метрики свой масштаб:
+ * для разбаланса шаг данных 0.001, отступ в 0.1 вынес бы значение за весь его диапазон. */
+const MIN_ABOVE_DANGER: Record<AlertType, number> = {
+  TEMPERATURE: 0.1,
+  VOLTAGE: 0.1,
+  IMBALANCE: 0.001,
 };
 
 /** Начальное значение нарушающего параметра берётся отсюда — не из узкой полосы над порогом,
@@ -51,24 +64,32 @@ const MAX_BY_TYPE: Record<AlertType, number> = {
 const INIT_VALUE_RANGE: Record<AlertType, [number, number]> = {
   TEMPERATURE: [TEMP_ALERT_MIN, TEMP_ALERT_MAX],
   VOLTAGE: [VOLTAGE_DANGER + 0.1, VOLTAGE_DANGER + 5],
+  IMBALANCE: [IMBALANCE_DANGER + 0.001, 0.255],
 };
 
 const DRIFT_STEP_MAX: Record<AlertType, number> = {
   TEMPERATURE: 0.3,
   VOLTAGE: 3,
+  IMBALANCE: 0.01,
 };
 
-/** Диапазон правдоподобного значения второго (не нарушенного) параметра. */
-const OTHER_BASELINE_RANGE: Record<AlertType, [number, number]> = {
-  TEMPERATURE: [VOLT_BASELINE_MIN, VOLT_BASELINE_MAX],
-  VOLTAGE: [TEMP_BASELINE_MIN, TEMP_BASELINE_MAX],
+/** Диапазон правдоподобного значения параметра, который в этом алерте не нарушен. */
+const BASELINE_RANGE: Record<AlertType, [number, number]> = {
+  TEMPERATURE: [TEMP_BASELINE_MIN, TEMP_BASELINE_MAX],
+  VOLTAGE: [VOLT_BASELINE_MIN, VOLT_BASELINE_MAX],
+  IMBALANCE: [IMB_BASELINE_MIN, IMB_BASELINE_MAX],
 };
 
-const OTHER_FIELD_JITTER: Record<AlertType, number> = {
-  TEMPERATURE: 1,
-  VOLTAGE: 0.3,
+const FIELD_JITTER: Record<AlertType, number> = {
+  TEMPERATURE: 0.3,
+  VOLTAGE: 1,
+  IMBALANCE: 0.002,
 };
 
+const ALL_ALERT_TYPES: AlertType[] = ['TEMPERATURE', 'VOLTAGE', 'IMBALANCE'];
+
+/* Из чего синтетика выбирает тип нарушения. IMBALANCE сюда намеренно не входит: метрике
+ * пока некуда рендериться, поле imbalance у алертов заполняется нормальным baseline. */
 const ALERT_TYPES: AlertType[] = ['TEMPERATURE', 'VOLTAGE'];
 
 type CarriageFixture = {
@@ -108,8 +129,7 @@ function makeAlert(
   carriage: CarriageFixture,
   batteryNumber: string,
   timestampMs: number,
-  violatingValue: number,
-  otherValue: number,
+  values: Record<AlertType, number>,
 ): Alert {
   return {
     type,
@@ -117,15 +137,10 @@ function makeAlert(
     carriage_number: carriage.number,
     carriage_type: carriage.type,
     battery_number: batteryNumber,
-    temperature: round1(type === 'TEMPERATURE' ? violatingValue : otherValue),
-    voltage: round1(type === 'VOLTAGE' ? violatingValue : otherValue),
+    temperature: round1(values.TEMPERATURE),
+    voltage: round1(values.VOLTAGE),
+    imbalance: round3(values.IMBALANCE),
   };
-}
-
-function randomOtherValue(rng: Rng, type: AlertType): number {
-  const [min, max] = OTHER_BASELINE_RANGE[type];
-
-  return randRange(rng, min, max);
 }
 
 /*
@@ -152,8 +167,17 @@ function generateBurst(rng: Rng, pool: CarriageFixture[], windowStart: number, w
   const danger = DANGER_BY_TYPE[type];
   const max = MAX_BY_TYPE[type];
   const driftStep = DRIFT_STEP_MAX[type];
-  const otherJitter = OTHER_FIELD_JITTER[type];
-  const otherBaseline = randomOtherValue(rng, type);
+  const minValue = danger + MIN_ABOVE_DANGER[type];
+
+  /* Не нарушенные параметры берут свой baseline один раз на весь burst и дальше только
+   * дрожат вокруг него — иначе соседние события выглядели бы как разные батареи. */
+  const baselines = {} as Record<AlertType, number>;
+
+  for (const other of ALL_ALERT_TYPES) {
+    if (other !== type) {
+      baselines[other] = randRange(rng, ...BASELINE_RANGE[other]);
+    }
+  }
 
   let t = Math.floor(randRange(rng, windowStart, maxStart));
   let value = randRange(rng, ...INIT_VALUE_RANGE[type]);
@@ -161,11 +185,17 @@ function generateBurst(rng: Rng, pool: CarriageFixture[], windowStart: number, w
   const alerts: Alert[] = [];
 
   for (let i = 0; i < eventCount; i++) {
-    value = clamp(value + randRange(rng, -driftStep, driftStep), danger + 0.1, max);
+    value = clamp(value + randRange(rng, -driftStep, driftStep), minValue, max);
 
-    const other = otherBaseline + randRange(rng, -otherJitter, otherJitter);
+    const values = {} as Record<AlertType, number>;
 
-    alerts.push(makeAlert(type, carriage, batteryNumber, t, value, other));
+    for (const field of ALL_ALERT_TYPES) {
+      values[field] = field === type
+        ? value
+        : baselines[field] + randRange(rng, -FIELD_JITTER[field], FIELD_JITTER[field]);
+    }
+
+    alerts.push(makeAlert(type, carriage, batteryNumber, t, values));
 
     t += Math.round(clamp(BURST_STEP_MS + randRange(rng, -BURST_STEP_JITTER_MS, BURST_STEP_JITTER_MS), 400, 1600));
   }

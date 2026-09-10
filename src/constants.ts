@@ -6,6 +6,18 @@ export const TEMPERATURE_DANGER = 45;
 
 export const VOLTAGE_DANGER = 450;
 
+/* Порог разбаланса выведен из реальных данных: минимальное значение критического события
+ * IMBALANCE во всех выгрузках — ровно 0.101 В при дискретности 0.001, значения 0.100 нет
+ * ни разу. То есть бэкенд заводит нарушение при строгом превышении 0.1 В — ровно так же,
+ * как сравнивает getTone(). */
+export const IMBALANCE_DANGER = 0.1;
+
+export const METRIC_DANGER: Record<Metric, number> = {
+  temperature: TEMPERATURE_DANGER,
+  voltage: VOLTAGE_DANGER,
+  imbalance: IMBALANCE_DANGER,
+};
+
 export const TONE_COLOR: Record<Tone, string> = {
   normal: 'green',
   danger: 'red',
@@ -17,16 +29,28 @@ export const DANGER_ZONE_FILL = 'rgba(255, 0, 0, 0.06)';
 export const METRIC_UNIT: Record<Metric, string> = {
   temperature: '°C',
   voltage: 'В',
+  imbalance: 'В',
 };
 
 export const METRIC_LABEL: Record<Metric, string> = {
   temperature: 'Температура',
   voltage: 'Напряжение',
+  imbalance: 'Разбаланс',
+};
+
+/* Разряды после запятой при показе значения. Температура — целые градусы: доли в телеметрии
+ * шум, который мешает сравнивать. Напряжение — десятые. Разбаланс живёт в диапазоне
+ * 0.001–0.25 В, поэтому только три знака его вообще различают. */
+export const METRIC_DECIMALS: Record<Metric, number> = {
+  temperature: 0,
+  voltage: 1,
+  imbalance: 3,
 };
 
 export const METRIC_TICK_MIN_STEP: Record<Metric, number> = {
   temperature: 1,
   voltage: 0.1,
+  imbalance: 0.01,
 };
 
 export const PERIOD_FORMAT: Intl.DateTimeFormatOptions = {
@@ -84,6 +108,7 @@ export const TOOLTIP_RING_GAP_DEG = 1;
 export const MINUTE_BARS_TICK_MIN_STEP: Record<Metric, number> = {
   temperature: 0.5,
   voltage: 0.1,
+  imbalance: 0.005,
 };
 
 export const MINUTE_BARS_TARGET_TICKS = 4;

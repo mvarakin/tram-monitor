@@ -1,4 +1,4 @@
-export type CriticalType = 'TEMPERATURE' | 'VOLTAGE';
+export type CriticalType = 'TEMPERATURE' | 'VOLTAGE' | 'IMBALANCE';
 
 export type CriticalEvent = {
   type: CriticalType;
@@ -10,6 +10,8 @@ export type Battery = {
   number: string;
   avg_temp: number | null;
   avg_vol: number | null;
+  /** Разбаланс напряжения ячеек, вольты. В телеметрии часто приходит null — датчик молчит. */
+  avg_imb: number | null;
   critical: CriticalEvent[];
 };
 

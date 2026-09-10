@@ -31,6 +31,8 @@ function App() {
           <Route path='/statistics/carriage/:number/temperature' element={<CarriageStatisticsPage metric='temperature' />} />
 
           <Route path='/statistics/carriage/:number/voltage' element={<CarriageStatisticsPage metric='voltage' />} />
+
+          <Route path='/statistics/carriage/:number/imbalance' element={<CarriageStatisticsPage metric='imbalance' />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -1,4 +1,4 @@
-export type AlertType = 'TEMPERATURE' | 'VOLTAGE';
+export type AlertType = 'TEMPERATURE' | 'VOLTAGE' | 'IMBALANCE';
 
 /** См. src/data/edc_alert_desc.ts — формат задан бэкендом. */
 export type Alert = {
@@ -9,4 +9,5 @@ export type Alert = {
   battery_number: string;
   temperature: number;
   voltage: number;
+  imbalance: number;
 };
