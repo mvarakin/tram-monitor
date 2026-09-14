@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
-import { useSearchParams, useOutletContext } from 'react-router-dom';
+import { useOutletContext, useSearchParams } from 'react-router-dom';
 
 import { MetricTable } from '../components/MetricTable';
 import { getCarriageRows } from '../data/carriageSelectors';
-import { formatDate } from './formatDate';
 import { toLocalDateInputValue } from '../time';
+import { formatDate } from './formatDate';
 
-import type { EdcStatistic } from '../types/edcStatistic';
 import type { DataMode } from '../types/dataMode';
+import type { EdcStatistic } from '../types/edcStatistic';
 
 type OutletContextType = {
   edcStatistic: EdcStatistic;
@@ -23,7 +23,7 @@ export function StatisticsPage() {
 
   const temperatureRows = useMemo(() => getCarriageRows(edcStatistic, 'temperature'), [edcStatistic]);
 
-  // const voltageRows = useMemo(() => getCarriageRows(edcStatistic, 'voltage'), [edcStatistic]);
+  const voltageRows = useMemo(() => getCarriageRows(edcStatistic, 'voltage'), [edcStatistic]);
 
   const imbalanceRows = useMemo(() => getCarriageRows(edcStatistic, 'imbalance'), [edcStatistic]);
 
@@ -75,7 +75,7 @@ export function StatisticsPage() {
         <div className='split'>
           <MetricTable title='Температура' metric='temperature' unit='°C' rows={temperatureRows} />
 
-          {/* <MetricTable title='Напряжение' metric='voltage' unit='В' rows={voltageRows} /> */}
+          <MetricTable title='Напряжение' metric='voltage' unit='В' rows={voltageRows} />
 
           <MetricTable title='Разбаланс' metric='imbalance' unit='В' rows={imbalanceRows} />
         </div>

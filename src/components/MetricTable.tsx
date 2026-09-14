@@ -32,7 +32,7 @@ export function MetricTable({ title, metric, unit, rows }: MetricTableProps) {
                 <th>Номер</th>
                 <th>Тип</th>
                 <th>Макс, {unit}</th>
-                <th>Крит. события</th>
+                <th>Крит.<br />события</th>
               </tr>
             </thead>
 

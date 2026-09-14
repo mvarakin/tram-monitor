@@ -4,7 +4,7 @@ export type Tone = 'normal' | 'danger';
 
 export const TEMPERATURE_DANGER = 45;
 
-export const VOLTAGE_DANGER = 450;
+export const VOLTAGE_DANGER = 540;
 
 /* Порог разбаланса выведен из реальных данных: минимальное значение критического события
  * IMBALANCE во всех выгрузках — ровно 0.101 В при дискретности 0.001, значения 0.100 нет
