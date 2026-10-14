@@ -47,7 +47,7 @@ const DANGER_BY_TYPE: Record<AlertType, number> = {
 
 const MAX_BY_TYPE: Record<AlertType, number> = {
   TEMPERATURE: TEMP_ALERT_MAX,
-  VOLTAGE: 480,
+  VOLTAGE: 600,
   IMBALANCE: 0.255,
 };
 

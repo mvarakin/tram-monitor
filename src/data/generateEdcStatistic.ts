@@ -98,7 +98,7 @@ function criticalValueFor(rng: Rng, type: CriticalType): number {
     case 'TEMPERATURE':
       return randRange(rng, TEMPERATURE_DANGER + 0.1, 60);
     case 'VOLTAGE':
-      return randRange(rng, VOLTAGE_DANGER + 0.1, 480);
+      return randRange(rng, VOLTAGE_DANGER + 0.1, 600);
     case 'IMBALANCE':
       return round3(randRange(rng, IMBALANCE_DANGER + 0.001, 0.3));
   }

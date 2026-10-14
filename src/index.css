@@ -23,7 +23,7 @@ body {
 }
 
 .app {
-  width: min(1600px, 100% - 64px);
+  width: min(1600px, 100% - 32px);
   margin: 0 auto;
 }
 
@@ -37,7 +37,7 @@ body {
 }
 
 .app-header__nav {
-  width: min(1600px, 100% - 64px);
+  width: min(1600px, 100% - 32px);
   margin: 0 auto;
   display: flex;
   gap: 32px;
@@ -171,8 +171,14 @@ h1 {
   align-items: start;
 }
 
+/* 1fr = minmax(auto, 1fr): без min-width таблица распирает колонку grid */
+.split > * {
+  min-width: 0;
+}
+
 .table-container {
   border: 1px solid #ddd;
+  overflow-x: auto;
 }
 
 .transport-row {
@@ -193,10 +199,12 @@ table {
   width: 100%;
   border-collapse: collapse;
   background: white;
+  font-size: 13px;
 }
 
 th {
-  padding: 10px 14px;
+  padding: 6px 8px;
+  vertical-align: bottom;
   border: 1px solid #ccc;
   background: #eee;
   text-align: left;
@@ -204,7 +212,7 @@ th {
 }
 
 td {
-  padding: 10px 14px;
+  padding: 6px 8px;
   border: 1px solid #ddd;
   text-align: left;
 }
@@ -293,6 +301,12 @@ td {
   flex-direction: column;
   gap: 12px;
   min-height: 0;
+}
+
+.battery-events__title {
+  flex: none;
+  font-weight: 600;
+  font-size: 14px;
 }
 
 .battery-events__block {

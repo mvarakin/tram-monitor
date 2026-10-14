@@ -336,6 +336,8 @@ export function BatteryChart({ segmentsByBattery, eventsByBattery, metric, from,
         </div>
 
         <div className='battery-events'>
+          <div className='battery-events__title'>Критические события</div>
+
           {batteries.map((battery, index) => (
             <BatteryEventPanel
               key={battery}

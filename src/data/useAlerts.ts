@@ -15,7 +15,7 @@ type AlertsState = {
 const EMPTY_ALERTS: Alert[] = [];
 
 /*
- * real: опрос GET /api/v1/alerts раз в ALERTS_POLL_INTERVAL_MS. start — timestamp последнего
+ * real: опрос GET /api/v1/alert раз в ALERTS_POLL_INTERVAL_MS. start — timestamp последнего
  * полученного алерта, а пока их нет — UTC-полночь. Следующий запрос планируется только после
  * ответа на предыдущий, поэтому запросы не наслаиваются. Ошибка не рвёт цикл: следующий тик
  * повторяет запрос с тем же start. С наступлением новых UTC-суток список и курсор сбрасываются.

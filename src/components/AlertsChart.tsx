@@ -296,6 +296,8 @@ export function AlertsChart({ eventsByBattery, metric, from, to }: AlertsChartPr
         </div>
 
         <div className='battery-events'>
+          <div className='battery-events__title'>Критические события</div>
+
           {batteries.map((battery, index) => (
             <BatteryEventPanel
               key={battery}
