@@ -3,7 +3,7 @@ stages:
   - build
 
 default:
-  image: node:22-alpine
+  image: node:26.3.1-alpine3.24
   cache:
     key:
       files:
@@ -16,8 +16,8 @@ lint:
   rules:
     - if: '$CI_COMMIT_BRANCH == "master"'
   script:
-    - yarn install --frozen-lockfile
-    - yarn lint
+    - npm install --frozen-lockfile
+    - npm run lint
 
 pages:
   stage: build
@@ -26,8 +26,8 @@ pages:
   rules:
     - if: '$CI_COMMIT_BRANCH == "master"'
   script:
-    - yarn install --frozen-lockfile
-    - yarn build
+    - npm install --frozen-lockfile
+    - npm run build
     - rm -rf public
     - mv dist public
     - cp public/index.html public/404.html
