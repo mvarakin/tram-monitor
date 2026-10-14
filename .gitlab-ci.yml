@@ -27,6 +27,7 @@ pages:
   rules:
     - if: '$CI_COMMIT_BRANCH == "master"'
   script:
+    - rm .env.example .env.production
     - npm install --frozen-lockfile
     - npm run build
     - rm -rf public
