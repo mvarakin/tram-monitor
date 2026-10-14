@@ -54,4 +54,4 @@ build_develop:
         --local dockerfile=. \
         --output type=image,name=registry-hub.mos.ru/kbl/tram/tramfront:latest,push=true
   only:
-    - develop
+    - master
