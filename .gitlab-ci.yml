@@ -1,6 +1,7 @@
 stages:
   - lint
   - build
+  - build_docker
 
 default:
   image: node:26.3.1-alpine3.24
@@ -34,3 +35,23 @@ pages:
   artifacts:
     paths:
       - public
+
+build_develop:
+  image:
+    name: moby/buildkit:rootless
+    entrypoint: [ "" ]
+  variables:
+    BUILDKITD_FLAGS: --oci-worker-no-process-sandbox
+  stage: build_docker
+  before_script:
+    - mkdir -p ~/.docker
+    - echo "{\"auths\":{\"$REGISTRY\":{\"username\":\"$REGISTRY_USER\",\"password\":\"$REGISTRY_PASSWORD\"}}}" > ~/.docker/config.json
+  script:
+    - |
+      buildctl-daemonless.sh build \
+        --frontend dockerfile.v0 \
+        --local context=. \
+        --local dockerfile=. \
+        --output type=image,name=registry-hub.mos.ru/kbl/tram/tramfront:latest,push=true
+  only:
+    - develop
