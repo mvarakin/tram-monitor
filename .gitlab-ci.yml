@@ -16,16 +16,16 @@ lint:
   rules:
     - if: '$CI_COMMIT_BRANCH == "master"'
   script:
-    - yarn install --frozen-lockfile
-    - yarn lint
+    - npm install --frozen-lockfile
+    - npm lint
 
 pages:
   stage: build
   rules:
     - if: '$CI_COMMIT_BRANCH == "master"'
   script:
-    - yarn install --frozen-lockfile
-    - yarn build
+    - npm install --frozen-lockfile
+    - npm build
     - rm -rf public
     - mv dist public
     - cp public/index.html public/404.html
