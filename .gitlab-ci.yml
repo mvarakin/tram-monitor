@@ -2,6 +2,7 @@ stages:
   - lint
   - build
   - build_docker
+  - deploy
 
 default:
   image: node:26.3.1-alpine3.24
@@ -54,5 +55,16 @@ build_develop:
         --local context=. \
         --local dockerfile=. \
         --output type=image,name=registry-hub.mos.ru/kbl/tram/tramfront:latest,push=true
+  only:
+    - master
+deploy_develop:
+  stage: deploy
+  image: docker:29.0.2-cli
+  before_script:
+    - docker info
+    - mkdir -p ~/.docker
+    - echo "{\"auths\":{\"$REGISTRY\":{\"username\":\"$REGISTRY_USER\",\"password\":\"$REGISTRY_PASSWORD\"}}}" > ~/.docker/config.json
+  script:
+    - docker stack deploy --with-registry-auth -c docker-compose.yml vm3-dev-dits-eaistk-8-16-300
   only:
     - master
