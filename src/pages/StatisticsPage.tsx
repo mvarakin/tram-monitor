@@ -6,15 +6,7 @@ import { getCarriageRows } from '../data/carriageSelectors';
 import { toLocalDateInputValue } from '../time';
 import { formatDate } from './formatDate';
 
-import type { DataMode } from '../types/dataMode';
-import type { EdcStatistic } from '../types/edcStatistic';
-
-type OutletContextType = {
-  edcStatistic: EdcStatistic;
-  isLoadingReal: boolean;
-  statisticsDataMode: DataMode;
-  availableDates: string[];
-};
+import type { OutletContextType } from '../types/outletContext';
 
 export function StatisticsPage() {
   const { edcStatistic, isLoadingReal, statisticsDataMode, availableDates } =

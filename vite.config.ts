@@ -2,7 +2,7 @@ import { readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import react from '@vitejs/plugin-react';
-import { defineConfig, type Plugin } from 'vite';
+import { defineConfig, loadEnv, type Plugin } from 'vite';
 
 const DATA_DIR = join(import.meta.dirname, 'public', 'data');
 
@@ -61,7 +61,16 @@ function dataIndex(): Plugin {
 }
 
 // https://vite.dev/config/
-export default defineConfig({
-  base: '/tram-monitor/',
-  plugins: [react(), dataIndex()],
+export default defineConfig(({ mode }) => {
+  const { VITE_API_PROXY_TARGET } = loadEnv(mode, import.meta.dirname);
+
+  return {
+    /* Прод-хост отдаёт приложение из корня. GitHub/GitLab Pages — из подпапки, её задаёт BASE_PATH в CI. */
+    base: process.env.BASE_PATH ?? '/',
+    plugins: [react(), dataIndex()],
+    server: {
+      /* dev: /api уходит на бэкенд через vite, без CORS. В проде origin задаёт VITE_API_BASE_URL. */
+      proxy: VITE_API_PROXY_TARGET ? { '/api': { target: VITE_API_PROXY_TARGET, changeOrigin: true } } : undefined,
+    },
+  };
 });

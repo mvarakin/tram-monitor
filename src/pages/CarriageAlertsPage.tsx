@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router-dom';
+import { Link, useOutletContext, useParams } from 'react-router-dom';
 
 import { AlertsChart } from '../components/AlertsChart';
 import { METRIC_LABEL } from '../constants';
@@ -6,16 +6,24 @@ import { getCarriageAlertData } from '../data/alertSelectors';
 import { getLocalDayRange } from '../time';
 import { formatDate } from './formatDate';
 
-import type { Alert } from '../types/alert';
 import type { Metric } from '../types/metric';
+import type { OutletContextType } from '../types/outletContext';
 
 type CarriageAlertsPageProps = {
-  alerts: Alert[];
   metric: Metric;
 };
 
-export function CarriageAlertsPage({ alerts, metric }: CarriageAlertsPageProps) {
+export function CarriageAlertsPage({ metric }: CarriageAlertsPageProps) {
+  const { alerts, isLoadingAlerts } = useOutletContext<OutletContextType>();
   const { number } = useParams();
+
+  if (isLoadingAlerts) {
+    return (
+      <main className='app'>
+        <p>Загрузка…</p>
+      </main>
+    );
+  }
 
   const data = number ? getCarriageAlertData(alerts, number, metric) : null;
 

@@ -88,10 +88,6 @@ const FIELD_JITTER: Record<AlertType, number> = {
 
 const ALL_ALERT_TYPES: AlertType[] = ['TEMPERATURE', 'VOLTAGE', 'IMBALANCE'];
 
-/* Из чего синтетика выбирает тип нарушения. IMBALANCE сюда намеренно не входит: метрике
- * пока некуда рендериться, поле imbalance у алертов заполняется нормальным baseline. */
-const ALERT_TYPES: AlertType[] = ['TEMPERATURE', 'VOLTAGE'];
-
 type CarriageFixture = {
   number: string;
   type: string;
@@ -162,7 +158,7 @@ function generateBurst(rng: Rng, pool: CarriageFixture[], windowStart: number, w
 
   const carriage = pick(rng, pool);
   const batteryNumber = pick(rng, carriage.batteryNumbers);
-  const type = pick(rng, ALERT_TYPES);
+  const type = pick(rng, ALL_ALERT_TYPES);
 
   const danger = DANGER_BY_TYPE[type];
   const max = MAX_BY_TYPE[type];

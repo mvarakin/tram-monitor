@@ -5,13 +5,8 @@ import { buildBatterySegments, buildCriticalEvents } from '../data/carriageSelec
 import { METRIC_LABEL } from '../constants';
 import { formatDate } from './formatDate';
 
-import type { EdcStatistic } from '../types/edcStatistic';
 import type { Metric } from '../types/metric';
-
-type OutletContextType = {
-  edcStatistic: EdcStatistic;
-  isLoadingReal: boolean;
-};
+import type { OutletContextType } from '../types/outletContext';
 
 type CarriageStatisticsPageProps = {
   metric: Metric;

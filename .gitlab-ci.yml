@@ -21,6 +21,8 @@ lint:
 
 pages:
   stage: build
+  variables:
+    BASE_PATH: /tram-monitor/
   rules:
     - if: '$CI_COMMIT_BRANCH == "master"'
   script:

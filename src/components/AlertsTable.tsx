@@ -29,9 +29,9 @@ export function AlertsTable({ title, metric, unit, rows }: AlertsTableProps) {
               <tr>
                 <th>Номер</th>
                 <th>Тип</th>
-                <th>Количество<br />критических событий</th>
-                <th>Дата последнего<br />критического события</th>
-                <th>{title}, {unit}<br />последнего<br />критического события</th>
+                <th>Количество<br />критических<br />событий</th>
+                <th>Дата последнего<br />критического<br />события</th>
+                <th>{title}, {unit}<br />последнего<br />крит. события</th>
               </tr>
             </thead>
 

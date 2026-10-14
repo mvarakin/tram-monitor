@@ -4,12 +4,16 @@ import { Outlet, useSearchParams } from 'react-router-dom';
 import { AppHeader } from './AppHeader';
 import { generateEdcStatistic } from '../data/generateEdcStatistic';
 import { fetchAvailableDates, fetchStatisticsForDate, resolveDate } from '../data/statisticsFiles';
+import { useAlerts } from '../data/useAlerts';
 
 import type { EdcStatistic } from '../types/edcStatistic';
 import type { DataMode } from '../types/dataMode';
+import type { OutletContextType } from '../types/outletContext';
 
 const STATISTICS_DATA_MODE_KEY = 'statisticsDataMode';
-const ALERTS_DATA_MODE_KEY = 'alertsDataMode';
+/* Ключ сменён вместе с дефолтом на 'real': под старым у всех лежит 'fake', записанный
+ * автоматически, пока переключатель алертов был заблокирован, — выбором пользователя он не был. */
+const ALERTS_DATA_MODE_KEY = 'alertsDataModeV2';
 
 function readStoredDataMode(key: string, fallback: DataMode): DataMode {
   const stored = localStorage.getItem(key);
@@ -21,13 +25,6 @@ function readStoredDataMode(key: string, fallback: DataMode): DataMode {
   return fallback;
 }
 
-type OutletContextType = {
-  edcStatistic: EdcStatistic;
-  isLoadingReal: boolean;
-  statisticsDataMode: DataMode;
-  availableDates: string[];
-};
-
 export function AppLayout() {
   const [searchParams, setSearchParams] = useSearchParams();
   const date = searchParams.get('date') ?? undefined;
@@ -37,8 +34,10 @@ export function AppLayout() {
   );
 
   const [alertsDataMode, setAlertsDataMode] = useState<DataMode>(() =>
-    readStoredDataMode(ALERTS_DATA_MODE_KEY, 'fake')
+    readStoredDataMode(ALERTS_DATA_MODE_KEY, 'real')
   );
+
+  const { alerts, isLoadingAlerts } = useAlerts(alertsDataMode);
 
   const [isLoadingReal, setIsLoadingReal] = useState(false);
 
@@ -134,7 +133,7 @@ export function AppLayout() {
       <div className='app-shell__content'>
         <Outlet
           context={
-            { edcStatistic, isLoadingReal, statisticsDataMode, availableDates } satisfies OutletContextType
+            { edcStatistic, isLoadingReal, statisticsDataMode, availableDates, alerts, isLoadingAlerts } satisfies OutletContextType
           }
         />
       </div>

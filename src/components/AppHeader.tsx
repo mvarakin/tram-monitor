@@ -24,7 +24,9 @@ export function AppHeader({
 
   const activeMode = isStatistics ? statisticsDataMode : alertsDataMode;
   const onModeChange = isStatistics ? onStatisticsDataModeChange : onAlertsDataModeChange;
-  const disabled = isMonitoring || isLoadingReal;
+  /* Алерты не блокируем на время загрузки: если бэкенд не отвечает, запрос может висеть долго,
+   * а с заблокированным переключателем не уйти обратно на фейк. */
+  const disabled = isStatistics && isLoadingReal;
 
   return (
     <header className='app-header'>
