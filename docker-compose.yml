@@ -1,0 +1,12 @@
+services:
+  tram-front:
+    image: registry-hub.mos.ru/kbl/tram/tramfront:latest
+    ports:
+      - target: 8050
+        published: 8050
+        protocol: tcp
+        mode: host
+    deploy:
+        placement:
+          constraints:
+              - "node.labels.TAG==test"
