@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { ALERTS_PAGE_SIZE, ALERTS_POLL_INTERVAL_MS } from '../constants';
-import { alertsStartDate, fetchAlertsPage, getUtcDayStart, mergeAlerts } from './alertsApi';
+import { alertsEndDate, alertsStartDate, fetchAlertsPage, getUtcDayStart, mergeAlerts } from './alertsApi';
 import { generateAlerts } from './generateAlerts';
 
 import type { AlertsSortValue } from './alertsApi';
@@ -16,8 +16,8 @@ type AlertsState = {
 const EMPTY_ALERTS: Alert[] = [];
 
 /*
- * real: опрос POST /api/v1/alert раз в ALERTS_POLL_INTERVAL_MS. start_date — всегда UTC-полночь
- * текущих суток, вперёд двигается только курсор sortValue из последнего ответа (null, пока
+ * real: опрос POST /api/v1/alert раз в ALERTS_POLL_INTERVAL_MS. startDate/endDate — всегда
+ * границы текущих UTC-суток, вперёд двигается только курсор sortValue из последнего ответа (null, пока
  * ответов не было). За тик страницы догружаются, пока не придёт неполная — меньше
  * ALERTS_PAGE_SIZE. Следующий тик планируется только после ответа на предыдущий, поэтому
  * запросы не наслаиваются. Ошибка не рвёт цикл: следующий тик повторяет запрос с последним
@@ -58,12 +58,13 @@ export function useAlerts(mode: DataMode): AlertsState {
       }
 
       const startDate = alertsStartDate(now);
+      const endDate = alertsEndDate(now);
 
       controller = new AbortController();
 
       try {
         for (;;) {
-          const page = await fetchAlertsPage(startDate, cursor, controller.signal);
+          const page = await fetchAlertsPage(startDate, endDate, cursor, controller.signal);
 
           if (cancelled) {
             return;

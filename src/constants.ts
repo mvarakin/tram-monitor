@@ -70,8 +70,12 @@ export const DAY_MS = 86_400_000;
 /** Период опроса POST /api/v1/alert в режиме real. */
 export const ALERTS_POLL_INTERVAL_MS = MINUTE_MS;
 
-/** size страницы POST /api/v1/alert: пришло меньше — новых алертов больше нет. */
-export const ALERTS_PAGE_SIZE = 100;
+/** size страницы POST /api/v1/alert: пришло меньше — новых алертов больше нет. 2000 — дефолтный
+ * spring.data.web.pageable.max-page-size: больше Spring молча обрежет, и клиент решит, что данные кончились. */
+export const ALERTS_PAGE_SIZE = 2000;
+
+/** sort POST /api/v1/alert. Только по возрастанию: курсор sortValue должен идти к новым алертам. */
+export const ALERTS_SORT = 'timestamp,asc';
 
 export const CHART_MARGIN = {
   top: 20,
