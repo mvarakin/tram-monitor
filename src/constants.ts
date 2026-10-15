@@ -67,8 +67,11 @@ export const HALF_HOUR_MS = 1_800_000;
 
 export const DAY_MS = 86_400_000;
 
-/** Период опроса GET /api/v1/alerts в режиме real. */
+/** Период опроса POST /api/v1/alert в режиме real. */
 export const ALERTS_POLL_INTERVAL_MS = MINUTE_MS;
+
+/** size страницы POST /api/v1/alert: пришло меньше — новых алертов больше нет. */
+export const ALERTS_PAGE_SIZE = 100;
 
 export const CHART_MARGIN = {
   top: 20,

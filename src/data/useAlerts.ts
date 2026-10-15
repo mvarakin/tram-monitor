@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { ALERTS_POLL_INTERVAL_MS } from '../constants';
-import { fetchAlerts, getUtcDayStart, initialAlertsStart, latestTimestamp, mergeAlerts } from './alertsApi';
+import { ALERTS_PAGE_SIZE, ALERTS_POLL_INTERVAL_MS } from '../constants';
+import { alertsStartDate, fetchAlertsPage, getUtcDayStart, mergeAlerts } from './alertsApi';
 import { generateAlerts } from './generateAlerts';
 
+import type { AlertsSortValue } from './alertsApi';
 import type { Alert } from '../types/alert';
 import type { DataMode } from '../types/dataMode';
 
@@ -15,10 +16,12 @@ type AlertsState = {
 const EMPTY_ALERTS: Alert[] = [];
 
 /*
- * real: опрос GET /api/v1/alert раз в ALERTS_POLL_INTERVAL_MS. start — timestamp последнего
- * полученного алерта, а пока их нет — UTC-полночь. Следующий запрос планируется только после
- * ответа на предыдущий, поэтому запросы не наслаиваются. Ошибка не рвёт цикл: следующий тик
- * повторяет запрос с тем же start. С наступлением новых UTC-суток список и курсор сбрасываются.
+ * real: опрос POST /api/v1/alert раз в ALERTS_POLL_INTERVAL_MS. start_date — всегда UTC-полночь
+ * текущих суток, вперёд двигается только курсор sortValue из последнего ответа (null, пока
+ * ответов не было). За тик страницы догружаются, пока не придёт неполная — меньше
+ * ALERTS_PAGE_SIZE. Следующий тик планируется только после ответа на предыдущий, поэтому
+ * запросы не наслаиваются. Ошибка не рвёт цикл: следующий тик повторяет запрос с последним
+ * полученным курсором. С наступлением новых UTC-суток список и курсор сбрасываются.
  */
 export function useAlerts(mode: DataMode): AlertsState {
   const fakeAlerts = useMemo(() => generateAlerts(), []);
@@ -37,6 +40,7 @@ export function useAlerts(mode: DataMode): AlertsState {
     let controller: AbortController | undefined;
 
     let alerts: Alert[] = EMPTY_ALERTS;
+    let cursor: AlertsSortValue | null = null;
     let windowDayStart = getUtcDayStart(Date.now());
 
     setRealAlerts(EMPTY_ALERTS);
@@ -49,22 +53,36 @@ export function useAlerts(mode: DataMode): AlertsState {
       if (dayStart !== windowDayStart) {
         windowDayStart = dayStart;
         alerts = EMPTY_ALERTS;
+        cursor = null;
         setRealAlerts(alerts);
       }
 
-      const start = latestTimestamp(alerts) ?? initialAlertsStart(now);
+      const startDate = alertsStartDate(now);
 
       controller = new AbortController();
 
       try {
-        const incoming = await fetchAlerts(start, controller.signal);
+        for (;;) {
+          const page = await fetchAlertsPage(startDate, cursor, controller.signal);
 
-        if (cancelled) {
-          return;
+          if (cancelled) {
+            return;
+          }
+
+          alerts = mergeAlerts(alerts, page.alerts);
+          setRealAlerts(alerts);
+
+          // Без курсора дальше листать нечем — на следующем тике повторим с прежним.
+          if (page.sortValue === null) {
+            break;
+          }
+
+          cursor = page.sortValue;
+
+          if (page.alerts.length < ALERTS_PAGE_SIZE) {
+            break;
+          }
         }
-
-        alerts = mergeAlerts(alerts, incoming);
-        setRealAlerts(alerts);
       } catch (error) {
         if (cancelled) {
           return;
